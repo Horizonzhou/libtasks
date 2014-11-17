@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _HTTP_SENDER_H_
@@ -36,13 +24,13 @@ namespace tasks {
 namespace net {
 
 class http_response_handler {
-   public:
+  public:
     virtual bool handle_response(std::shared_ptr<http_response> response) = 0;
 };
 
 template <class handler_type>
 class http_sender : public net_io_task {
-   public:
+  public:
     http_sender() : net_io_task(EV_UNDEF), m_response(new http_response()) {}
 
     http_sender(std::shared_ptr<handler_type> handler) : net_io_task(EV_UNDEF), handler_type(), m_handler(handler) {}
@@ -97,7 +85,7 @@ class http_sender : public net_io_task {
         start_watcher(worker);
     }
 
-   private:
+  private:
     std::shared_ptr<http_request> m_request;
     std::shared_ptr<http_response> m_response;
     std::shared_ptr<handler_type> m_handler;

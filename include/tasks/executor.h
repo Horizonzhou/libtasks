@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _TASKS_EXECUTOR_H_
@@ -34,7 +22,7 @@ namespace tasks {
 class executor {
     friend class test_exec;
 
-   public:
+  public:
     executor();
 
     virtual ~executor() {
@@ -66,7 +54,7 @@ class executor {
 
     static void set_timeout(uint32_t timeout) { m_timeout = timeout; }
 
-   private:
+  private:
     std::atomic<bool> m_busy;
     std::atomic<bool> m_term;
     exec_task* m_task = nullptr;

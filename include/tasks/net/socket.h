@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _TASKS_SOCKET_H_
@@ -40,14 +28,14 @@ namespace tasks {
 namespace net {
 
 class socket_exception : public tasks::tasks_exception {
-   public:
+  public:
     socket_exception(std::string what) : tasks::tasks_exception(what) {}
 };
 
 enum class socket_type { TCP, UDP };
 
 class socket {
-   public:
+  public:
     socket(int fd) : m_fd(fd) {}
     socket(socket_type = socket_type::TCP);
 
@@ -87,7 +75,7 @@ class socket {
     std::streamsize write(const char* data, std::size_t len, int port = -1, std::string ip = "");
     std::streamsize read(char* data, std::size_t len);
 
-   private:
+  private:
     int m_fd = -1;
     socket_type m_type = socket_type::TCP;
     bool m_blocking = false;

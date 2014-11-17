@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _UWSGI_REQUEST_H_
@@ -36,12 +24,12 @@ namespace tasks {
 namespace net {
 
 class uwsgi_exception : public tasks::tasks_exception {
-   public:
+  public:
     uwsgi_exception(std::string what) : tasks::tasks_exception(what) {}
 };
 
 class uwsgi_request {
-   public:
+  public:
     typedef std::unordered_map<std::string, std::string> uwsgi_vars_t;
 
     static std::string NO_VAL;
@@ -90,7 +78,7 @@ class uwsgi_request {
         }
     }
 
-   private:
+  private:
     uwsgi_packet_header m_header;
     tasks::tools::buffer m_data_buffer;
     tasks::tools::buffer m_content_buffer;

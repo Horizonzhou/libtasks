@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _BUFFER_H_
@@ -31,7 +19,7 @@ namespace tasks {
 namespace tools {
 
 class buffer : public std::streambuf {
-   public:
+  public:
     buffer() {
         setg(ptr_begin(), ptr_begin(), ptr_end());
         setp(ptr_begin(), ptr_end());
@@ -117,7 +105,7 @@ class buffer : public std::streambuf {
         setp(ptr_begin(), ptr_end());
     }
 
-   protected:
+  protected:
     // std::streambuf override
     std::streamsize xsputn(const char_type* s, std::streamsize count) {
         set_size(m_size + count);
@@ -134,7 +122,7 @@ class buffer : public std::streambuf {
         return std::streambuf::xsgetn(s, size);
     }
 
-   private:
+  private:
     std::vector<char> m_buffer;
     std::size_t m_size = 0;
 };

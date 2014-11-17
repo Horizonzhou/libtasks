@@ -1,20 +1,8 @@
 /*
- * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
+ * Copyright (c) 2013-2014 ADTECH GmbH
+ * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
- * This file is part of libtasks.
- *
- * libtasks is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libtasks is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: Andreas Pohl
  */
 
 #ifndef _UWSGI_THRIFT_ASYNC_PROCESSOR_H_
@@ -42,7 +30,7 @@ namespace net {
 
 template <class handler_type>
 class uwsgi_thrift_async_processor : public uwsgi_task {
-   public:
+  public:
     typedef uwsgi_thrift_transport<uwsgi_request> in_transport_type;
     typedef uwsgi_thrift_transport<http_response> out_transport_type;
     typedef TBinaryProtocol protocol_type;
@@ -141,7 +129,7 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
         out_protocol->getTransport()->flush();
     }
 
-   private:
+  private:
     int32_t m_seqid = 0;
     std::unique_ptr<handler_type> m_handler;
 };
