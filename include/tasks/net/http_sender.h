@@ -33,7 +33,8 @@ class http_sender : public net_io_task {
   public:
     http_sender() : net_io_task(EV_UNDEF), m_response(new http_response()) {}
 
-    http_sender(std::shared_ptr<handler_type> handler) : net_io_task(EV_UNDEF), handler_type(), m_handler(handler) {}
+    http_sender(std::shared_ptr<handler_type> handler)
+        : net_io_task(EV_UNDEF), m_response(new http_response()), m_handler(handler) {}
 
     bool handle_event(tasks::worker* worker, int revents) {
         bool success = true;
