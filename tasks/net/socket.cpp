@@ -20,7 +20,7 @@
 namespace tasks {
 namespace net {
 
-socket::socket(socket_type type) : m_fd(-1), m_type(type) {
+socket::socket(socket_type type) : io_base(), m_type(type) {
     if (socket_type::UDP == m_type) {
         m_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
         if (m_fd < 0) {
@@ -200,14 +200,12 @@ void socket::connect(std::string host, int port) {
     }
 }
 
-void socket::close() {
-    if (-1 != m_fd) {
-        ::close(m_fd);
+void socket::shutdown() {
+    if (m_fd > -1) {
+        ::shutdown(m_fd, SHUT_RDWR);
         m_fd = -1;
     }
 }
-
-void socket::shutdown() { ::shutdown(m_fd, SHUT_RDWR); }
 
 std::streamsize socket::write(const char *data, std::size_t len, int port, std::string ip) {
     if (m_fd == -1 && udp()) {

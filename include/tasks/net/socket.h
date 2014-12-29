@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <tasks/io_base.h>
 #include <tasks/tasks_exception.h>
 
 #ifdef _OS_LINUX_
@@ -34,12 +35,10 @@ class socket_exception : public tasks::tasks_exception {
 
 enum class socket_type { TCP, UDP };
 
-class socket {
+class socket : public io_base {
   public:
-    socket(int fd) : m_fd(fd) {}
+    socket(int fd) : io_base(fd) {}
     socket(socket_type = socket_type::TCP);
-
-    inline int fd() const { return m_fd; }
 
     inline bool udp() const { return m_type == socket_type::UDP; }
 
@@ -70,13 +69,11 @@ class socket {
     void connect(std::string host, int port);
 
     void shutdown();
-    void close();
 
     std::streamsize write(const char* data, std::size_t len, int port = -1, std::string ip = "");
     std::streamsize read(char* data, std::size_t len);
 
   private:
-    int m_fd = -1;
     socket_type m_type = socket_type::TCP;
     bool m_blocking = false;
     std::shared_ptr<struct sockaddr_in> m_addr;

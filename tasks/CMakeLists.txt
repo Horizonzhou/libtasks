@@ -21,6 +21,7 @@ configure_file(
 aux_source_directory(. TASKS_SRC)
 aux_source_directory(tools TASKS_SRC)
 aux_source_directory(net TASKS_SRC)
+aux_source_directory(serial TASKS_SRC)
 include_directories(${PROJECT_SOURCE_DIR}/../include)
 
 add_definitions(-DTASKS_VERSION="${LIBRARY_VERSION}")

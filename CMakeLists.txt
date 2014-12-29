@@ -7,9 +7,11 @@ endif()
 
 file(GLOB tasks_headers "include/tasks/*.h")
 file(GLOB net_headers "include/tasks/net/*.h")
+file(GLOB serial_headers "include/tasks/serial/*.h")
 file(GLOB tools_headers "include/tasks/tools/*.h")
 install(FILES ${tasks_headers} DESTINATION include/tasks)
 install(FILES ${net_headers} DESTINATION include/tasks/net)
+install(FILES ${serial_headers} DESTINATION include/tasks/serial)
 install(FILES ${tools_headers} DESTINATION include/tasks/tools)
 
 find_program(VERA++ vera++)
