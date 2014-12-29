@@ -8,4 +8,4 @@ Description: An I/O task system written in modern C++ that implements the Leader
 Version: @LIBRARY_VERSION@
 URL: https://github.com/apohl79/libtasks
 Libs: -L${libdir} -ltasks
-Cflags: -I${includedir}/tasks/
+Cflags: -I${includedir}
