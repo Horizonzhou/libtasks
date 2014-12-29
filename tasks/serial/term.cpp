@@ -143,5 +143,5 @@ std::streamsize term::read(char* data, std::size_t len) {
     return ::read(m_fd, data, len);
 }
 
-}  // net
+}  // serial
 }  // tasks
