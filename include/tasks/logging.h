@@ -33,13 +33,19 @@ extern std::mutex g_log_mutex;
 #define tput_time(t, f) ""
 #endif
 
-#define tlog(s, m)                                                                                          \
-    {                                                                                                       \
-        ttime_init;                                                                                         \
-        _LOGMUTEX;                                                                                          \
-        s << "[" << tput_time(&tm, "%h %e %T") << " " << std::setw(14) << std::this_thread::get_id() << " " \
-          << std::setw(16) << __FILE__ << ":" << std::setw(3) << std::setfill('0') << __LINE__ << "] "      \
-          << std::setfill(' ') << m << std::flush;                                                          \
+#ifndef _WITH_SHORT_LOG
+#define _LOGDBGINFO                                                                                               \
+    " " << std::setw(14) << std::this_thread::get_id() << " " << std::setw(16) << __FILE__ << ":" << std::setw(3) \
+        << std::setfill('0') << __LINE__
+#else
+#define _LOGDBGINFO ""
+#endif
+
+#define tlog(s, m)                                                                                             \
+    {                                                                                                          \
+        ttime_init;                                                                                            \
+        _LOGMUTEX;                                                                                             \
+        s << "[" << tput_time(&tm, "%h %e %T") << _LOGDBGINFO << "] " << std::setfill(' ') << m << std::flush; \
     }
 
 #ifdef _DEBUG_OUTPUT
