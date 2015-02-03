@@ -1,1 +1,4 @@
 *.user
+*~
+.DS_Store
+
