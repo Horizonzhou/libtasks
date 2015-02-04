@@ -26,7 +26,7 @@ void http_request::prepare_data_buffer() {
     m_data_buffer.write(" HTTP/1.1", 9);
     m_data_buffer.write(CRLF, CRLF_SIZE);
     // Headers
-    for (auto kv : m_headers) {
+    for (auto& kv : m_headers) {
         m_data_buffer.write(kv.first.c_str(), kv.first.length());
         m_data_buffer.write(": ", 2);
         m_data_buffer.write(kv.second.c_str(), kv.second.length());
