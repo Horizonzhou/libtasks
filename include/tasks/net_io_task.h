@@ -32,8 +32,10 @@ class net_io_task : public io_task_base {
     }
 
     /// Provide access to the underlying socket object.
-    inline net::socket& socket() { return m_socket; }
-        
+    inline net::socket& socket() {
+        return m_socket;
+    }
+
     // This public method can be used to add io tasks outside of a worker thread
     // context. If io tasks should be created within the context of a worker thread,
     // you should use the protected non static method and pass a worker thread
@@ -44,12 +46,21 @@ class net_io_task : public io_task_base {
     void add_task(worker* worker, net_io_task* task);
 
     /// Grant socket access to the io_task_base.
-    io_base& iob() { return m_socket; }
+    io_base& iob() {
+        return m_socket;
+    }
     /// Grant const socket access to the io_task_base.
-    const io_base& iob() const { return m_socket; }
+    const io_base& iob() const {
+        return m_socket;
+    }
+    /// Disable automatic closing of the socket in the desctructor.
+    void disable_auto_close() {
+        m_auto_close = false;
+    }
 
   private:
     net::socket m_socket;
+    bool m_auto_close = true;
 };
 
 }  // tasks
