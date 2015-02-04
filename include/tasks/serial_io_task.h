@@ -20,14 +20,8 @@ namespace tasks {
 class serial_io_task : public io_task_base {
   public:
     serial_io_task(int events) : io_task_base(events) {}
-    serial_io_task(serial::term& term, int events) : serial_io_task(events) {
-        m_term = term;
-        if (-1 != m_term.fd()) {
-            init_watcher();
-        }
-    }
-
-    virtual ~serial_io_task() { m_term.close(); }
+    serial_io_task(serial::term& term, int events);
+    virtual ~serial_io_task();
 
     /// Provide access to the underlying term object.
     inline serial::term& term() { return m_term; }
@@ -39,9 +33,14 @@ class serial_io_task : public io_task_base {
     io_base& iob() { return m_term; }
     /// Grant const socket access to the io_task_base.
     const io_base& iob() const { return m_term; }
+    /// Disable automatic closing of the term object in the desctructor.
+    void disable_auto_close() {
+        m_auto_close = false;
+    }
 
   private:
     serial::term m_term;
+    bool m_auto_close = true;
 };
 
 }  // tasks
