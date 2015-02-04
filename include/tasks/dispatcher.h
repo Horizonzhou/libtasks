@@ -31,6 +31,8 @@ class disposable;
 
 struct signal_data;
 
+typedef std::function<void(int)> signal_func_t;
+
 class dispatcher {
     friend class test_exec;
 
@@ -88,6 +90,10 @@ class dispatcher {
             m_instance = nullptr;
         }
     }
+
+    // Add a signal handler.
+    // You have to call this before calling start() or run().
+    static void add_signal_handler(int sig, signal_func_t func);
 
     // Get a free worker to promote it to the leader.
     std::shared_ptr<worker> free_worker();
@@ -157,7 +163,6 @@ class dispatcher {
     std::condition_variable m_finish_cond;
     std::mutex m_finish_mutex;
 
-    ev_signal m_signal;
     bool m_started = false;
 
     worker* get_worker_by_task(event_task* task);

@@ -81,6 +81,11 @@ bool stats::handle_event(tasks::worker* worker, int events) {
     return true;
 }
 
+void handle_signal(int sig) {
+    terr("Got signal " << sig << std::endl);
+    dispatcher::instance()->terminate();
+}
+
 int main(int argc, char** argv) {
 #ifdef PROFILER
     ProfilerStart("echoserver.prof");
@@ -88,6 +93,7 @@ int main(int argc, char** argv) {
     stats s;
     acceptor<echo_handler> srv(12345);
     // dispatcher::init_workers(1);
+    dispatcher::add_signal_handler(SIGINT, handle_signal);
     auto tasks = std::vector<task*>{&srv, &s};
     dispatcher::instance()->run(tasks);
 #ifdef PROFILER
