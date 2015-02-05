@@ -15,12 +15,18 @@ namespace net {
 
 class http_request : public http_base {
   public:
-    http_request(std::string host, std::string url = "", int port = 80) : m_url(url), m_port(port) {
-        m_headers["Host"] = host;
+    http_request(std::string host, std::string url = "", int port = 80) : m_host(host), m_url(url), m_port(port) {
+        m_headers["Host"] = m_host;
         init_default_headers();
     }
 
-    inline void set_url(std::string url) { m_url = url; }
+    inline void set_host(std::string host) {
+        m_host = host;
+    }
+
+    inline void set_url(std::string url) {
+        m_url = url;
+    }
 
     inline int port() const { return m_port; }
 
@@ -28,11 +34,12 @@ class http_request : public http_base {
 
     void clear() {
         http_base::clear();
-        m_url = "";
         init_default_headers();
+        m_headers["Host"] = m_host;
     }
 
   private:
+    std::string m_host;
     std::string m_url;
     int m_port;
 
