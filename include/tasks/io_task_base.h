@@ -30,7 +30,7 @@ class io_task_base : public event_task, public disposable {
 
     std::string get_string() const {
         std::ostringstream os;
-        os << "io_task_base(" << this << "," << iob().fd() << ":" << m_events << ")";
+        os << "io_task_base(" << this << ")";
         return os.str();
     }
 
