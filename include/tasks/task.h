@@ -15,6 +15,7 @@ namespace tasks {
 
 class worker;
 
+/// The base class for any task.
 class task {
   public:
     typedef std::function<void(worker* worker)> finish_func_worker_t;
@@ -41,17 +42,26 @@ class task {
 
     virtual ~task() {}
 
+    /// Returns true if auto deletion is active.
     inline bool auto_delete() const { return m_auto_delete; }
 
+    /// Call this to deactivate auto deletion.
     inline void disable_auto_delete() { m_auto_delete = false; }
 
+    /// Called by a worker when a task has auto_deletion enabled. 
     void finish(worker* worker = nullptr);
 
-    // If a task finishes it can execute callback functions. Note that no locks will be used at this
-    // level.
-    inline void on_finish(finish_func_worker_t f) { m_finish_funcs.push_back(finish_func_t(f)); }
+    /// If a task finishes it can execute callback functions. Note that no locks will be used at this
+    /// level.
+    inline void on_finish(finish_func_worker_t f) {
+        m_finish_funcs.push_back(finish_func_t(f));
+    }
 
-    inline void on_finish(finish_func_void_t f) { m_finish_funcs.push_back(finish_func_t(f)); }
+    /// If a task finishes it can execute callback functions. Note that no locks will be used at this
+    /// level.
+    inline void on_finish(finish_func_void_t f) {
+        m_finish_funcs.push_back(finish_func_t(f));
+    }
 
   private:
     // Default behavior is to delete a task when handle_event returns false. Change this by calling
