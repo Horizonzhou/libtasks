@@ -14,7 +14,8 @@
 
 namespace tasks {
 
-// Signals to enter a worker thread context. Passed to worker::signal_call().
+/// Function type for functors that get executed in the context of a worker thread. See
+/// worker::exec_in_worker_ctx(task_func_t f).
 typedef std::function<void(struct ev_loop*)> task_func_t;
 
 class event_task : public task, public error_base {

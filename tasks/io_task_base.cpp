@@ -34,7 +34,7 @@ void io_task_base::set_events(int events) {
 
 void io_task_base::start_watcher(worker* worker) {
     assert(m_watcher_initialized);
-    worker->signal_call([this](struct ev_loop* loop) {
+    worker->exec_in_worker_ctx([this](struct ev_loop* loop) {
         if (!ev_is_active(m_io.get())) {
             tdbg(get_string() << ": starting watcher" << std::endl);
             ev_io_start(loop, m_io.get());
@@ -44,7 +44,7 @@ void io_task_base::start_watcher(worker* worker) {
 
 void io_task_base::stop_watcher(worker* worker) {
     assert(m_watcher_initialized);
-    worker->signal_call([this](struct ev_loop* loop) {
+    worker->exec_in_worker_ctx([this](struct ev_loop* loop) {
         if (ev_is_active(m_io.get())) {
             tdbg(get_string() << ": stopping watcher" << std::endl);
             ev_io_stop(loop, m_io.get());
@@ -55,7 +55,7 @@ void io_task_base::stop_watcher(worker* worker) {
 void io_task_base::update_watcher(worker* worker) {
     assert(m_watcher_initialized);
     if (m_change_pending) {
-        worker->signal_call([this](struct ev_loop* loop) {
+        worker->exec_in_worker_ctx([this](struct ev_loop* loop) {
             tdbg(get_string() << ": updating watcher" << std::endl);
             bool active = ev_is_active(m_io.get());
             if (active) {
@@ -71,7 +71,7 @@ void io_task_base::update_watcher(worker* worker) {
 }
 
 void io_task_base::dispose(worker* worker) {
-    worker->signal_call([this](struct ev_loop* loop) {
+    worker->exec_in_worker_ctx([this](struct ev_loop* loop) {
         if (ev_is_active(watcher())) {
             tdbg(get_string() << ": disposing io_task_base" << std::endl);
             ev_io_stop(loop, watcher());

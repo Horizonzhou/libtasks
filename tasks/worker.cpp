@@ -115,7 +115,7 @@ void tasks_async_callback(struct ev_loop* loop, ev_async* w, int /* events */) {
         }
         // Execute all queued functors
         while (!qcpy.empty()) {
-            assert(worker->signal_call(qcpy.front()));
+            assert(worker->exec_in_worker_ctx(qcpy.front()));
             qcpy.pop();
         }
     }

@@ -76,7 +76,7 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
             response().set_header("Content-Type", "application/x-thrift");
             // Make sure we run in the context of a worker thread
             if (error_code() == tasks_error::UNSET) {
-                worker->signal_call([this](struct ev_loop*) { send_response(); });
+                worker->exec_in_worker_ctx([this](struct ev_loop*) { send_response(); });
             }
             // Allow cleanup now
             enable_dispose();

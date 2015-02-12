@@ -29,7 +29,7 @@ net_io_task::~net_io_task() {
 }
 
 void net_io_task::add_task(worker* worker, net_io_task* task) {
-    worker->signal_call([worker, task](struct ev_loop* loop) {
+    worker->exec_in_worker_ctx([worker, task](struct ev_loop* loop) {
         tdbg(task->get_string() << ": adding net_io_task" << std::endl);
         task->init_watcher();
         task->assign_worker(worker);
