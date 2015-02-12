@@ -35,11 +35,15 @@ class net_io_task : public io_task_base {
     inline net::socket& socket() {
         return m_socket;
     }
+    /// Provide const access to the underlying socket object.
+    inline const net::socket& socket() const {
+        return m_socket;
+    }
 
-    // This public method can be used to add io tasks outside of a worker thread
-    // context. If io tasks should be created within the context of a worker thread,
-    // you should use the protected non static method and pass a worker thread
-    // pointer.
+    /// This public method can be used to add io tasks outside of a worker thread
+    /// context. If io tasks should be created within the context of a worker thread,
+    /// you should use the protected non static method and pass a worker thread
+    /// pointer.
     static void add_task(net_io_task* task);
 
   protected:
