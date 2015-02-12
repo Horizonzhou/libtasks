@@ -24,7 +24,8 @@ socket::socket(socket_type type) : io_base(), m_type(type) {
     if (socket_type::UDP == m_type) {
         m_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
         if (m_fd < 0) {
-            throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     } else if (socket_type::TCP != m_type) {
         terr("socket: Invalid socket_type! Using TCP.");
@@ -35,17 +36,19 @@ socket::socket(socket_type type) : io_base(), m_type(type) {
 void socket::listen(std::string path, int queue_size) {
     m_fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (m_fd < 0) {
-        throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
     }
 #ifndef _OS_LINUX_
     int on = 1;
     if (setsockopt(m_fd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&on, sizeof(on))) {
-        throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKOPT_NOSIGPIPE,
+                              "setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)), errno);
     }
 #endif
     if (!m_blocking) {
         if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
-            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_FNCTL, "fcntl failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     }
     struct sockaddr_un addr;
@@ -55,56 +58,61 @@ void socket::listen(std::string path, int queue_size) {
     unlink(addr.sun_path);
 #ifdef _OS_LINUX_
     if (::bind(m_fd, (struct sockaddr *)&addr, sizeof(addr.sun_family) + path.length())) {
-        throw socket_exception("bind failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_BIND, "bind failed: " + std::string(std::strerror(errno)), errno);
     }
 #else
     if (::bind(m_fd, (struct sockaddr *)&addr, SUN_LEN(&addr))) {
-        throw socket_exception("bind failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_BIND, "bind failed: " + std::string(std::strerror(errno)), errno);
     }
 #endif
     if (chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) {
-        throw socket_exception("chmod failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_CHMOD, "chmod failed: " + std::string(std::strerror(errno)), errno);
     }
     if (::listen(m_fd, queue_size) != 0) {
-        throw socket_exception("listen failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_LISTEN, "listen failed: " + std::string(std::strerror(errno)), errno);
     }
 }
 
 void socket::listen(int port, std::string ip, int queue_size) {
     if (udp()) {
-        throw socket_exception("listen failed: can't be called for UDP sockets");
+        throw tasks_exception(tasks_error::SOCKET_LISTEN_UDP, "listen failed: can't be called for UDP sockets");
     }
     bind(port, ip, false /* mark this object as tcp socket */);
     if (::listen(m_fd, queue_size)) {
-        throw socket_exception("listen failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_LISTEN, "listen failed: " + std::string(std::strerror(errno)), errno);
     }
 }
 
-void socket::bind(int port, std::string ip) { bind(port, ip, true /* mark this object as udp socket */); }
+void socket::bind(int port, std::string ip) {
+    bind(port, ip, true /* mark this object as udp socket */);
+}
 
 void socket::bind(int port, std::string ip, bool udp) {
     int on = 1;
     m_type = socket_type::UDP;
     m_fd = ::socket(AF_INET, udp ? SOCK_DGRAM : SOCK_STREAM, 0);
     if (m_fd < 0) {
-        throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
     }
     if (setsockopt(m_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on))) {
-        throw socket_exception("setsockopt SO_REUSEADDR failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKOPT_REUSEADDR,
+                              "setsockopt SO_REUSEADDR failed: " + std::string(std::strerror(errno)), errno);
     }
 #ifndef _OS_LINUX_
     if (setsockopt(m_fd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&on, sizeof(on))) {
-        throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKOPT_NOSIGPIPE,
+                              "setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)), errno);
     }
 #endif
     if (!m_blocking) {
         if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
-            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_FNCTL, "fcntl failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     }
     init_sockaddr(port, ip);
     if (::bind(m_fd, (struct sockaddr *)m_addr.get(), sizeof(*(m_addr.get())))) {
-        throw socket_exception("bind failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_BIND, "bind failed: " + std::string(std::strerror(errno)), errno);
     }
 }
 
@@ -131,7 +139,7 @@ socket socket::accept() {
     socklen_t len = sizeof(addr);
     int client = ::accept(m_fd, (struct sockaddr *)&addr, &len);
     if (client < 0) {
-        throw socket_exception("accept failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_ACCEPT, "accept failed: " + std::string(std::strerror(errno)), errno);
     }
     return socket(client);
 }
@@ -139,12 +147,13 @@ socket socket::accept() {
 void socket::connect(std::string path) {
     m_fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (m_fd < 0) {
-        throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
     }
 #ifndef _OS_LINUX_
     int on = 1;
     if (setsockopt(m_fd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&on, sizeof(on))) {
-        throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKOPT_NOSIGPIPE,
+                              "setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)), errno);
     }
 #endif
     struct sockaddr_un addr;
@@ -154,18 +163,21 @@ void socket::connect(std::string path) {
 
 #ifdef _OS_LINUX_
     if (::connect(m_fd, (struct sockaddr *)&addr, sizeof(addr.sun_family) + path.length())) {
-        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_CONNECT, "connect failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
 #else
     addr.sun_len = SUN_LEN(&addr);
     if (::connect(m_fd, (struct sockaddr *)&addr, SUN_LEN(&addr))) {
-        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_CONNECT, "connect failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
 #endif
 
     if (!m_blocking) {
         if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
-            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_FNCTL, "fcntl failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     }
 }
@@ -173,16 +185,17 @@ void socket::connect(std::string path) {
 void socket::connect(std::string host, int port) {
     struct hostent *remote = gethostbyname(host.c_str());
     if (nullptr == remote) {
-        throw socket_exception("Host " + host + " not found");
+        throw tasks_exception(tasks_error::SOCKET_NOHOST, "Host " + host + " not found");
     }
     m_fd = ::socket(AF_INET, SOCK_STREAM, 0);
     if (m_fd < 0) {
-        throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
     }
 #ifndef _OS_LINUX_
     int on = 1;
     if (setsockopt(m_fd, SOL_SOCKET, SO_NOSIGPIPE, (char *)&on, sizeof(on))) {
-        throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_SOCKOPT_NOSIGPIPE,
+                              "setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)), errno);
     }
 #endif
     struct sockaddr_in addr;
@@ -191,11 +204,13 @@ void socket::connect(std::string host, int port) {
     std::memcpy(&addr.sin_addr, remote->h_addr_list[0], remote->h_length);
     addr.sin_port = htons(port);
     if (::connect(m_fd, (struct sockaddr *)&addr, sizeof(addr))) {
-        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::SOCKET_CONNECT, "connect failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
     if (!m_blocking) {
         if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
-            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_FNCTL, "fcntl failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     }
 }
@@ -211,7 +226,8 @@ std::streamsize socket::write(const char *data, std::size_t len, int port, std::
     if (m_fd == -1 && udp()) {
         m_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
         if (m_fd < 0) {
-            throw socket_exception("socket failed: " + std::string(std::strerror(errno)));
+            throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)),
+                                  errno);
         }
     }
     if (port > -1) {
@@ -227,7 +243,7 @@ std::streamsize socket::write(const char *data, std::size_t len, int port, std::
     if (bytes < 0 && errno != EAGAIN) {
         std::stringstream s;
         s << "error writing to client file descriptor " << m_fd << ": " << std::strerror(errno);
-        throw socket_exception(s.str());
+        throw tasks_exception(tasks_error::SOCKET_WRITE, s.str(), errno);
     }
     return bytes;
 }
@@ -243,11 +259,11 @@ std::streamsize socket::read(char *data, std::size_t len) {
     if (bytes < 0 && errno != EAGAIN) {
         std::stringstream s;
         s << "error reading from client file descriptor " << m_fd << ": " << std::strerror(errno);
-        throw socket_exception(s.str());
+        throw tasks_exception(tasks_error::SOCKET_READ, s.str(), errno);
     } else if (bytes == 0) {
         std::stringstream s;
         s << "client " << m_fd << " disconnected";
-        throw socket_exception(s.str());
+        throw tasks_exception(tasks_error::SOCKET_NOCON, s.str());
     }
     return bytes;
 }

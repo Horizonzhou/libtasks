@@ -38,7 +38,9 @@ std::shared_future<std::streamsize> disk_io_task::op() {
                 break;
             default:
                 m_bytes = -1;
-                set_error(get_string() + std::string(": events has to be either EV_READ or EV_WRITE"));
+                tasks_exception e(tasks_error::DISKIO_INVALID_EVENT,
+                                  get_string() + std::string(": events has to be either EV_READ or EV_WRITE"));
+                set_exception(e);
         }
         bytes_promise.set_value(m_bytes);
         // fire an event

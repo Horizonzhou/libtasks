@@ -87,9 +87,11 @@ void http_response::parse_data() {
             } else {
                 // Second line break means content starts
                 if (m_chunked_enc) {
-                    throw http_exception("http_response: Chunked transfer encoding needs to be implemented!");
+                    throw tasks_exception(tasks_error::HTTP_NOT_IMPL,
+                                          "http_response: Chunked transfer encoding needs to be implemented!");
                 } else if (!m_content_length_exists) {
-                    throw http_exception("http_response: Invalid response: Content-Length header missing");
+                    throw tasks_exception(tasks_error::HTTP_NO_CONTENT_LENGTH,
+                                          "http_response: Invalid response: Content-Length header missing");
                 }
                 m_content_start = m_last_line_start + 1;
                 if (*(m_content_buffer.ptr(m_content_start)) == '\n') {
@@ -119,7 +121,8 @@ void http_response::parse_status() {
     m_status_code = std::atoi(space + 1);
     tdbg("http_response: Status is " << m_status << std::endl);
     if (m_status_code < 100 || m_status_code > 999) {
-        throw http_exception("http_response: Invalid status code " + std::to_string(m_status_code));
+        throw tasks_exception(tasks_error::HTTP_INVALID_STATUS_CODE,
+                              "http_response: Invalid status code " + std::to_string(m_status_code));
     }
 }
 
@@ -145,7 +148,8 @@ void http_response::parse_header() {
             }
         }
     } else {
-        throw http_exception("http_response: Invalid header: " + std::string(m_content_buffer.ptr(m_last_line_start)));
+        throw tasks_exception(tasks_error::HTTP_INVALID_HEADER,
+                              "http_response: Invalid header: " + std::string(m_content_buffer.ptr(m_last_line_start)));
     }
 }
 

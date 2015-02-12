@@ -43,6 +43,11 @@ class uwsgi_thrift_async_handler : public tasks::error_base {
     // Async handlers call this method to trigger the processor callback
     inline void finish() { m_finish_func(); }
 
+    inline void set_error(std::string msg) {
+        tasks_exception e(tasks_error::UWSGI_THRIFT_HANDLER, msg);
+        set_exception(e);
+    }
+
   public:
     virtual ~uwsgi_thrift_async_handler() {}
     virtual void service(std::shared_ptr<args_t> args) = 0;

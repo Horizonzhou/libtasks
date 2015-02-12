@@ -19,4 +19,11 @@ void event_task::assign_worker(worker* worker) {
     }
 }
 
+void event_task::notify_error(worker* worker) {
+    const tasks_exception& e = exception();
+    for (auto f : m_error_funcs) {
+        f(worker, e);
+    }
+}
+
 }  // tasks

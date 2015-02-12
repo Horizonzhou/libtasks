@@ -20,7 +20,7 @@ std::string uwsgi_request::NO_VAL;
 void uwsgi_request::read_header(socket& sock) {
     std::streamsize bytes = sock.read((char*)&m_header, sizeof(m_header));
     if (bytes != sizeof(m_header)) {
-        throw uwsgi_exception("uwsgi_request: error reading header");
+        throw tasks_exception(tasks_error::UWSGI_HEADER_ERROR, "uwsgi_request: error reading header");
     }
     tdbg("uwsgi_request::read_header: read header successfully, " << bytes << " bytes" << std::endl);
 }

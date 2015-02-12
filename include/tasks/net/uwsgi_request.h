@@ -23,11 +23,6 @@
 namespace tasks {
 namespace net {
 
-class uwsgi_exception : public tasks::tasks_exception {
-  public:
-    uwsgi_exception(std::string what) : tasks::tasks_exception(what) {}
-};
-
 class uwsgi_request {
   public:
     typedef std::unordered_map<std::string, std::string> uwsgi_vars_t;

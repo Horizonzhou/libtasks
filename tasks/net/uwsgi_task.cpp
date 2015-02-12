@@ -29,7 +29,8 @@ bool uwsgi_task::handle_event(tasks::worker* /* worker */, int revents) {
                        << "modifier1=" << (int)m_request.header().modifier1
                        << " datasize=" << m_request.header().datasize
                        << " modifier2=" << (int)m_request.header().modifier2;
-                    set_error(os.str());
+                    tasks_exception e(tasks_error::UWSGI_NOT_IMPL, os.str());
+                    set_exception(e);
                     success = false;
                 }
             }
@@ -47,7 +48,7 @@ bool uwsgi_task::handle_event(tasks::worker* /* worker */, int revents) {
         }
     } catch (tasks::tasks_exception& e) {
         tdbg("uwsgi_task(" << this << "): exception: " << e.what() << std::endl);
-        set_error(e.what());
+        set_exception(e);
         success = false;
     }
     return success;

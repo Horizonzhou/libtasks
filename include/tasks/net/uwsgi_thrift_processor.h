@@ -49,7 +49,9 @@ class uwsgi_thrift_processor : public tasks::net::uwsgi_task {
                 response().set_status("400 Bad Request");
             }
         } catch (TTransportException& e) {
-            set_error(std::string("TTransportException: ") + std::string(e.what()));
+            tasks_exception ex(tasks_error::UWSGI_THRIFT_TRANSPORT,
+                               std::string("TTransportException: ") + std::string(e.what()));
+            set_exception(ex);
             response().set_status("400 Bad Request");
         }
 
@@ -64,3 +66,8 @@ class uwsgi_thrift_processor : public tasks::net::uwsgi_task {
 }  // tasks
 
 #endif  // _THRIFT_PROCESSOR_H_
+
+
+
+
+

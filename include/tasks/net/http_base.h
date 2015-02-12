@@ -27,11 +27,6 @@
 namespace tasks {
 namespace net {
 
-class http_exception : public tasks::tasks_exception {
-  public:
-    http_exception(std::string what) : tasks::tasks_exception(what) {}
-};
-
 class http_base {
   public:
     static const std::string NO_VAL;

@@ -11,6 +11,7 @@
 #include <string>
 #include <exception>
 #include <memory>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -27,11 +28,6 @@ struct sockaddr_in;
 
 namespace tasks {
 namespace net {
-
-class socket_exception : public tasks::tasks_exception {
-  public:
-    socket_exception(std::string what) : tasks::tasks_exception(what) {}
-};
 
 enum class socket_type { TCP, UDP };
 

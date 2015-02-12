@@ -23,7 +23,7 @@ net_io_task::~net_io_task() {
     tdbg(get_string() << ": dtor" << std::endl);
     // NOTE: The watcher will be stoped by dispose().
     if (m_auto_close) {
-        tdbg(get_string() << "closing socket" << std::endl);
+        tdbg(get_string() << ": closing socket" << std::endl);
         m_socket.close();
     }
 }

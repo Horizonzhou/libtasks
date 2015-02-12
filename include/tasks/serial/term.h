@@ -19,11 +19,6 @@
 namespace tasks {
 namespace serial {
 
-class term_exception : public tasks::tasks_exception {
-  public:
-    term_exception(std::string what) : tasks::tasks_exception(what) {}
-};
-
 enum class termmode_t { _8N1, _7S1, _7E1, _7O1 };
 enum class charsize_t : tcflag_t { _5 = CS5, _6 = CS6, _7 = CS7, _8 = CS8 };
 enum class parity_t { NONE, EVEN, ODD };

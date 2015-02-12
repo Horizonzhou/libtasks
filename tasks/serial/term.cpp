@@ -15,36 +15,39 @@ namespace serial {
 
 struct termios term::options() {
     if (m_fd < 0) {
-        throw term_exception("no open device");
+        throw tasks_exception(tasks_error::TERM_NO_DEVICE, "no open device");
     }
     struct termios opts;
     if (tcgetattr(m_fd, &opts)) {
         close();
-        throw term_exception("tcgetattr failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_TCGETATTR, "tcgetattr failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
     return opts;
 }
 
 void term::set_options(struct termios& opts) {
     if (m_fd < 0) {
-        throw term_exception("no open device");
+        throw tasks_exception(tasks_error::TERM_NO_DEVICE, "no open device");
     }
     if (tcsetattr(m_fd, TCSANOW, &opts)) {
         close();
-        throw term_exception("tcsetattr failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_TCSETATTR, "tcsetattr failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
 }
 
 void term::open(std::string port, speed_t baudrate, charsize_t charsize, parity_t parity, stopbits_t stopbits) {
     m_fd = ::open(port.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (m_fd < 0) {
-        throw term_exception("opening " + port + std::string(" failed: ") + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_OPEN,
+                              "opening " + port + std::string(" failed: ") + std::string(std::strerror(errno)), errno);
     }
 
     // ensure non blocking reads
     if (fcntl(m_fd, F_SETFL, FNDELAY)) {
         close();
-        throw term_exception("fcntl failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_FCNTL, "fcntl failed: " + std::string(std::strerror(errno)), errno);
     }
 
     // read the current settings
@@ -59,11 +62,13 @@ void term::open(std::string port, speed_t baudrate, charsize_t charsize, parity_
     // baudrate
     if (cfsetispeed(&opts, baudrate)) {
         close();
-        throw term_exception("cfsetispeed failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_CFSETISPEED, "cfsetispeed failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
     if (cfsetospeed(&opts, baudrate)) {
         close();
-        throw term_exception("cfsetospeed failed: " + std::string(std::strerror(errno)));
+        throw tasks_exception(tasks_error::TERM_CFSETOSPEED, "cfsetospeed failed: " + std::string(std::strerror(errno)),
+                              errno);
     }
 
     // charachter size
@@ -85,7 +90,7 @@ void term::open(std::string port, speed_t baudrate, charsize_t charsize, parity_
             break;
         default:
             close();
-            throw term_exception("invalid parity parameter");
+            throw tasks_exception(tasks_error::TERM_INVALID_PARITY, "invalid parity parameter");
     }
 
     // stopbits
@@ -97,7 +102,7 @@ void term::open(std::string port, speed_t baudrate, charsize_t charsize, parity_
             opts.c_cflag |= CSTOPB;
         default:
             close();
-            throw term_exception("invalid stopbits parameter");
+            throw tasks_exception(tasks_error::TERM_INVALID_STOPBITS, "invalid stopbits parameter");
     }
 
     set_options(opts);
@@ -118,7 +123,7 @@ void term::open(std::string port, speed_t baudrate, termmode_t mode) {
             open(port, baudrate, charsize_t::_7, parity_t::ODD, stopbits_t::_1);
             break;
         default:
-            throw term_exception("invalid mode parameter");
+            throw tasks_exception(tasks_error::TERM_INVALID_MODE, "invalid mode parameter");
     }
 }
 
@@ -131,14 +136,14 @@ void term::close() {
 
 std::streamsize term::write(const char* data, std::size_t len) {
     if (m_fd < 0) {
-        throw term_exception("no open device");
+        throw tasks_exception(tasks_error::TERM_NO_DEVICE, "no open device");
     }
     return ::write(m_fd, data, len);
 }
 
 std::streamsize term::read(char* data, std::size_t len) {
     if (m_fd < 0) {
-        throw term_exception("no open device");
+        throw tasks_exception(tasks_error::TERM_NO_DEVICE, "no open device");
     }
     return ::read(m_fd, data, len);
 }
