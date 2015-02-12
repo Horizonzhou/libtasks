@@ -36,6 +36,7 @@ class http_sender : public net_io_task {
     http_sender(std::shared_ptr<handler_type> handler)
         : net_io_task(EV_UNDEF), m_response(new http_response()), m_handler(handler) {}
 
+    /// \copydoc event_task::handle_event
     bool handle_event(tasks::worker* worker, int revents) {
         bool success = true;
         try {
@@ -47,43 +48,55 @@ class http_sender : public net_io_task {
                     }
                     success = m_handler->handle_response(m_response);
                     m_response->clear();
-                    m_request->clear();
                 }
             } else if (EV_WRITE & revents) {
                 m_request->write_data(socket());
                 if (m_request->done()) {
+                    // Reset the request buffer to be able to reuse the same object again
+                    m_request->clear();
+                    // Read the response
                     set_events(EV_READ);
                     update_watcher(worker);
                 }
             }
         } catch (tasks::tasks_exception& e) {
-            set_error(e.what());
+            set_exception(e);
             success = false;
         }
         return success;
     }
 
+    inline bool connected() const {
+        return socket().fd() != -1;
+    }
+
+    /// Send out an http_request. The http_sender will automatically be added to the task system when calling this
+    /// method.
     inline void send(std::shared_ptr<http_request> request) {
         m_request = request;
         const std::string& host = m_request->header("Host");
-        if (-1 == socket().fd() || m_host != host) {
-            m_host = host;
-            m_port = m_request->port();
-            // Close an existing connection
+        tdbg("http_sender: Sending request to " << host << std::endl);
+        // Find the worker if keepalive is used, and this is not the first request, or the object is reused to connect
+        // to a different host.
+        tasks::worker* worker = tasks::dispatcher::instance()->get_worker_by_task(this);
+        if (connected() && m_host != host) {
+            // Stop the watcher and close an existing connection.
+            tdbg("http_sender: Closing connection to " << m_host << ":" << m_port << std::endl);
+            stop_watcher(worker);
             socket().close();
+        }
+        m_host = host;
+        m_port = m_request->port();
+        m_request->set_header("Host", m_host);
+        set_events(EV_WRITE);
+        if (!connected()) {
             // Connect
             tdbg("http_sender: Connecting " << m_host << ":" << m_port << std::endl);
             socket().connect(m_host, m_port);
-            init_watcher();
+            tasks::dispatcher::instance()->add_event_task(this);
+        } else {
+            update_watcher(worker);
         }
-        m_request->set_header("Host", m_host);
-        set_events(EV_WRITE);
-        tasks::worker* worker = tasks::worker::get();
-        if (nullptr == worker) {
-            worker = tasks::dispatcher::instance()->last_worker();
-        }
-        update_watcher(worker);
-        start_watcher(worker);
     }
 
   private:
