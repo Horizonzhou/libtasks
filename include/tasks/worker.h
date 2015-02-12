@@ -31,7 +31,7 @@ namespace tasks {
 
 class event_task;
 
-// Needed to use std::unique_ptr<>
+/// Needed to use std::unique_ptr<>
 struct loop_t {
     struct ev_loop* ptr;
     loop_t() : ptr(nullptr) {}
@@ -43,10 +43,10 @@ struct task_func_queue_t {
     std::mutex mutex;
 };
 
-// Put all queued events into a queue instead of handling them
-// directly from handle_io_event as multiple events can fire and
-// we want to promote the next leader after the ev_loop call
-// returns to avoid calling it from multiple threads.
+/// Put all queued events into a queue instead of handling them
+/// directly from handle_io_event as multiple events can fire and
+/// we want to promote the next leader after the ev_loop call
+/// returns to avoid calling it from multiple threads.
 struct event {
     tasks::event_task* task;
     int revents;
@@ -57,9 +57,10 @@ class worker {
     worker(uint8_t id, std::unique_ptr<loop_t>& loop);
     virtual ~worker();
 
+    /// Return the worker id.
     inline uint8_t id() const { return m_id; }
 
-    // Provide access to the executing worker thread
+    /// Provide access to the executing worker thread object in the current thread context.
     static worker* get() { return m_worker_ptr; }
 
     inline std::string get_string() const {
@@ -68,6 +69,7 @@ class worker {
         return os.str();
     }
 
+    /// Return the event loop pointer for this worker.
     inline struct ev_loop* loop_ptr() const {
         struct ev_loop* loop = nullptr;
         switch (dispatcher::run_mode()) {
@@ -81,13 +83,13 @@ class worker {
         return loop;
     }
 
-    // Executes task_func_t directly if called in leader thread
-    // context or delegates it. Returns true when task_func_t has
-    // been executed.
-    inline bool signal_call(task_func_t f) {
+    /// Executes task_func_t directly if called in leader thread context or delegates it. Returns true when task_func_t
+    /// has been executed. If some work needs to be executed in the context of a worker thread (eg to modify a watcher)
+    /// this method needs to be used.
+    inline bool exec_in_worker_ctx(task_func_t f) {
         if (m_leader && this == worker::get()) {
-            // The worker is running an event loop and we are running in the workers thread context,
-            // now execute the functor
+            // The worker is running an event loop and we are running in the workers thread context, now execute the
+            // functor.
             f(m_loop->ptr);
             return true;
         } else {
@@ -96,6 +98,12 @@ class worker {
         }
     }
 
+    /// Same as exec_in_ctx(task_func_t f)
+    inline bool signal_call(task_func_t f) {
+        return exec_in_worker_ctx(f);
+    }
+
+    /// Put a functor into the async work queue of a worker and notify it.
     inline void async_call(task_func_t f) {
         task_func_queue_t* tfq = (task_func_queue_t*)m_signal_watcher.data;
         {
@@ -105,6 +113,7 @@ class worker {
         ev_async_send(loop_ptr(), &m_signal_watcher);
     }
 
+    /// Pass the event loop to the worker.
     inline void set_event_loop(std::unique_ptr<loop_t>& loop) {
         m_loop = std::move(loop);
         m_leader = true;
@@ -112,6 +121,7 @@ class worker {
         m_work_cond.notify_one();
     }
 
+    /// Terminate the worker and wait for it to finish. 
     inline void terminate() {
         tdbg(get_string() << ": waiting to terminate thread" << std::endl);
         m_term = true;
@@ -124,8 +134,10 @@ class worker {
         tdbg(get_string() << ": thread done" << std::endl);
     }
 
+    /// Add an event to the workers queue.
     inline void add_event(event e) { m_events_queue.push(e); }
 
+    /// Add an event to the workers queue from a different thread context.
     static void add_async_event(event e) {
         worker* w = dispatcher::instance()->last_worker();
         tdbg("worker: adding async event to worker " << w << std::endl);
@@ -136,26 +148,30 @@ class worker {
         });
     }
 
+    /// Handle an I/O event.
     void handle_io_event(ev_io* watcher, int revents);
+
+    /// Handle a timer event.
     void handle_timer_event(ev_timer* watcher);
 
+    /// Return the number of events the worker has handled until now.
     inline uint64_t events_count() const { return m_events_count; }
 
 #if ENABLE_ADD_TIME == 1
-    // If you need some internal time measurements local to the worker threads, you can
-    // enable this method and drop times in microseconds into this. An average value will
-    // be printed to STDOUT for every 5000 measures.
-    //
-    // Example:
-    //
-    // Measure the time it takes to handle some request:
-    //
-    //   auto s = std::chrono::high_resolution_clock::now();
-    //   success = handle_request();
-    //   auto e = std::chrono::high_resolution_clock::now();
-    //   uint64_t delta = std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
-    //   worker->add_time(0, delta);
-    //
+    /// If you need some internal time measurements local to the worker threads, you can
+    /// enable this method and drop times in microseconds into this. An average value will
+    /// be printed to STDOUT for every 5000 measures.
+    ///
+    /// Example:
+    ///
+    /// Measure the time it takes to handle some request:
+    ///
+    ///   auto s = std::chrono::high_resolution_clock::now();
+    ///   success = handle_request();
+    ///   auto e = std::chrono::high_resolution_clock::now();
+    ///   uint64_t delta = std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
+    ///   worker->add_time(0, delta);
+    ///
     inline void add_time(uint64_t idx, uint64_t t) {
         m_time_total[idx] += t;
         m_time_count[idx]++;
@@ -170,9 +186,9 @@ class worker {
 
   private:
 #ifndef __clang__
-    thread_local static worker* m_worker_ptr;
+    thread_local static worker* m_worker_ptr;  /// A thread local pointer to the worker thread
 #else
-    __thread static worker* m_worker_ptr;
+    __thread static worker* m_worker_ptr;  /// A thread local pointer to the worker thread
 #endif
     uint8_t m_id;
     uint64_t m_events_count = 0;
@@ -188,26 +204,39 @@ class worker {
     uint64_t m_time_count[ADD_TIME_BUCKETS];
 #endif
 
-    // Every worker has an async watcher to be able to call
-    // into the leader thread context.
+    /// Every worker has an async watcher to be able to call
+    /// into the leader thread context.
     ev_async m_signal_watcher;
 
     std::unique_ptr<std::thread> m_thread;
 
+    /// Find a free worker and promote it to become the next leader. 
     inline void promote_leader() {
-        std::shared_ptr<worker> w = dispatcher::instance()->free_worker();
-        if (nullptr != w) {
-            // If we find a free worker, we promote it to the next
-            // leader. This thread stays leader otherwise.
-            m_leader = false;
-            w->set_event_loop(m_loop);
+        if (dispatcher::mode::SINGLE_LOOP == dispatcher::run_mode()) {
+            std::shared_ptr<worker> w = dispatcher::instance()->free_worker();
+            if (nullptr != w) {
+                // If we find a free worker, we promote it to the next
+                // leader. This thread stays leader otherwise.
+                m_leader = false;
+                w->set_event_loop(m_loop);
+            }
         }
     }
 
+    /// Let the dispatcher know that this thread is free to become a leader and take on some work.
+    inline void mark_free() {
+        if (dispatcher::mode::SINGLE_LOOP == dispatcher::run_mode()) {
+            dispatcher::instance()->add_free_worker(id());
+        }
+    }
+
+    /// Main method of the thread.
     void run();
 };
 
 /* CALLBACKS */
+
+/// Callback for I/O events.
 template <typename EV_t>
 void tasks_event_callback(struct ev_loop* loop, EV_t w, int e) {
     worker* worker = (tasks::worker*)ev_userdata(loop);
@@ -218,6 +247,7 @@ void tasks_event_callback(struct ev_loop* loop, EV_t w, int e) {
     worker->add_event(event);
 }
 
+/// Callback for async events.
 void tasks_async_callback(struct ev_loop* loop, ev_async* w, int events);
 
 }  // tasks

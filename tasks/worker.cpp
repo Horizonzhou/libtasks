@@ -43,8 +43,7 @@ worker::~worker() {
 
 void worker::run() {
     m_worker_ptr = this;
-
-    dispatcher::instance()->add_free_worker(id());
+    mark_free();
 
     while (!m_term) {
         // Wait until promoted to the leader thread
@@ -67,16 +66,20 @@ void worker::run() {
                 tdbg(get_string() << ": executing events" << std::endl);
                 // Now promote the next leader and call the event
                 // handlers
-                if (dispatcher::mode::SINGLE_LOOP == dispatcher::run_mode()) {
-                    promote_leader();
-                }
+                promote_leader();
                 // Handle events
                 while (!m_events_queue.empty()) {
                     m_events_count++;
                     event event = m_events_queue.front();
-                    if (event.task->handle_event(this, event.revents)) {
-                        // We activate the watcher again as true
-                        // was returned.
+                    bool cont = event.task->handle_event(this, event.revents);
+                    // Trigger the error callbacks if needed.
+                    if (event.task->error()) {
+                        event.task->notify_error(this);
+                    }
+                    // If the handler wants to continue to run the task we activate the watcher again. Otherwise we
+                    // delete it if it has auto deletion activated.
+                    if (cont) {
+                        event.task->reset_error();
                         event.task->start_watcher(this);
                     } else {
                         if (event.task->auto_delete()) {
@@ -89,10 +92,7 @@ void worker::run() {
         }
 
         if (!m_term) {
-            // Mark this worker as available worker
-            if (dispatcher::mode::SINGLE_LOOP == dispatcher::run_mode()) {
-                dispatcher::instance()->add_free_worker(id());
-            }
+            mark_free();
         } else {
             // Shutdown, the leader terminates the loop
             if (m_leader) {
