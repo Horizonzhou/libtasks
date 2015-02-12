@@ -79,13 +79,13 @@ void dispatcher::start() {
         assert(nullptr != w);
         m_workers.push_back(w);
     }
-    // Wait for the workers to become available
-    for (uint8_t i = 0; i < m_num_workers; i++) {
-        while (!m_workers_busy.test(i)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-    }
     if (mode::SINGLE_LOOP == m_run_mode) {
+        // Wait for the workers to become available
+        for (uint8_t i = 0; i < m_num_workers; i++) {
+            while (!m_workers_busy.test(i)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
         // Promote the first leader
         std::unique_ptr<loop_t> loop(new loop_t);
         loop->ptr = ev_default_loop(0);
