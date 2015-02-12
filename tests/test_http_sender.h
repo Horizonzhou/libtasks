@@ -17,13 +17,26 @@
 #include <condition_variable>
 
 class test_handler : public tasks::net::http_response_handler {
-   public:
+  public:
     bool handle_response(std::shared_ptr<tasks::net::http_response> response);
+};
+
+class test_handler_keepalive : public tasks::net::http_response_handler {
+  public:
+    bool handle_response(std::shared_ptr<tasks::net::http_response> response);
+};
+
+class test_http_close_handler : public tasks::net_io_task {
+  public:
+    test_http_close_handler(tasks::net::socket& socket) : net_io_task(socket, EV_READ) {}
+    bool handle_event(tasks::worker*, int) { return false; }
 };
 
 class test_http_sender : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(test_http_sender);
     CPPUNIT_TEST(requests);
+    CPPUNIT_TEST(requests_keepalive);
+    CPPUNIT_TEST(requests_close);
     CPPUNIT_TEST_SUITE_END();
 
    public:
@@ -32,8 +45,6 @@ class test_http_sender : public CppUnit::TestFixture {
 
    protected:
     void requests();
-
-   private:
-    std::condition_variable m_cond;
-    std::mutex m_mutex;
+    void requests_keepalive();
+    void requests_close();
 };
