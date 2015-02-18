@@ -37,10 +37,10 @@ class http_sender : public net_io_task {
         : net_io_task(EV_UNDEF), m_response(new http_response()), m_handler(handler) {}
 
     /// \copydoc event_task::handle_event
-    bool handle_event(tasks::worker* worker, int revents) {
+    bool handle_event(tasks::worker* worker, int events) {
         bool success = true;
         try {
-            if (EV_READ & revents) {
+            if (EV_READ & events) {
                 m_response->read_data(socket());
                 if (m_response->done()) {
                     if (nullptr == m_handler) {
@@ -49,7 +49,7 @@ class http_sender : public net_io_task {
                     success = m_handler->handle_response(m_response);
                     m_response->clear();
                 }
-            } else if (EV_WRITE & revents) {
+            } else if (EV_WRITE & events) {
                 m_request->write_data(socket());
                 if (m_request->done()) {
                     // Reset the request buffer to be able to reuse the same object again

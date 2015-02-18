@@ -53,13 +53,14 @@ class term : public io_base {
      * \param parity The parity (default: parity_t::NONE)
      * \param stopbits The number of stopbits (default: stopbits_t::SB1)
      */
-    void open(std::string port, speed_t baudrate = B9600, charsize_t chrarsize = charsize_t::_8,
+    void open(std::string port, speed_t baudrate = B9600, charsize_t charsize = charsize_t::_8,
               parity_t parity = parity_t::NONE, stopbits_t stopbits = stopbits_t::_1);
 
     /*!
      * \brief Open a terminal device.
      *
      * \param port The device port (eg: /dev/ttyUSB0)
+     * \param baudrate The baudrate (default: 9600)
      * \param mode The mode the device should be opened with (default:
      *   termmode_t::_8N1 for 8N1 mode)
      */

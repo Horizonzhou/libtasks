@@ -34,6 +34,11 @@ libtasks supports the [uwsgi protocol](http://uwsgi-docs.readthedocs.org/en/late
 
 - Implement HTTP clients
 
+Documentation
+-------------
+
+The code documentation can be found at [https://adtechlabs.github.io/doc/libtasks](https://adtechlabs.github.io/doc/libtasks).
+
 Building
 --------
 
@@ -53,7 +58,7 @@ Note: To run the tests you need to have nginx installed.
 
 ### The following cmake options are possible at the moment:
 
-- -DCMAKE_BUILD_TYPE=<type> - if type is "Debug" the library will be build with debug logging enabled. Default is "Release".
+- -DCMAKE_BUILD_TYPE=<type> - if type is "Debug" the library will be build with debug logging enabled. Set it to "Doc" to generate the code documentation (make doc). Default is "Release".
 - -DDISABLE_TESTS=<option>  - if option is "y" or "Y" the tests will not be build. Default is N.
 - -DWITH_EXAMPLES=<option>  - if option is "y" or "Y" the examples will be built too. Default is N.
 - -DWITH_PROFILER=<option>  - if option is "y" or "Y" the examples will be build with profiling support. Default is N.
