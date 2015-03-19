@@ -62,6 +62,7 @@ Note: To run the tests you need to have nginx installed.
 - -DDISABLE_TESTS=<option>  - if option is "y" or "Y" the tests will not be build. Default is N.
 - -DWITH_EXAMPLES=<option>  - if option is "y" or "Y" the examples will be built too. Default is N.
 - -DWITH_PROFILER=<option>  - if option is "y" or "Y" the examples will be build with profiling support. Default is N.
+- -DNO_DBG_SYMBOLS=<option> - if option is "y" or "Y" no debug symols will be added to the binary.
 
 Examples
 --------

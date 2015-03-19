@@ -51,6 +51,10 @@ endif(CMAKE_BUILD_TYPE MATCHES "Debug")
 
 add_definitions(-Wall -Wextra -Wlong-long -Wmissing-braces -std=c++1y -pthread)
 
+if(NOT NO_DBG_SYMBOLS MATCHES "Y" OR NOT NO_DBG_SYMBOLS MATCHES "y")
+  add_definitions(-g)
+endif(NOT NO_DBG_SYMBOLS MATCHES "Y" OR NOT NO_DBG_SYMBOLS MATCHES "y")
+
 find_package(PkgConfig)
 find_package(Boost 1.53.0 REQUIRED system thread REQUIRED)
 find_package(LibEV REQUIRED)
