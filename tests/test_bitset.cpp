@@ -49,7 +49,7 @@ void test_bitset::test() {
     bitset::int_type bit;
 
     bitset bs1(10);
-    CPPUNIT_ASSERT(1 == bs1.buckets());
+    CPPUNIT_ASSERT(10 == bs1.buckets());
     full_iteration(bs1);
     bs1.set(0);
     bs1.set(3);
@@ -73,7 +73,7 @@ void test_bitset::test() {
     CPPUNIT_ASSERT(3 == bit);
 
     bitset bs2(64);
-    CPPUNIT_ASSERT(1 == bs2.buckets());
+    CPPUNIT_ASSERT(64 == bs2.buckets());
     full_iteration(bs2);
     bs2.set(63);
     CPPUNIT_ASSERT(bs2.next(bit));
@@ -84,7 +84,7 @@ void test_bitset::test() {
     CPPUNIT_ASSERT(63 == bit);
 
     bitset bs3(120);
-    CPPUNIT_ASSERT(2 == bs3.buckets());
+    CPPUNIT_ASSERT(120 == bs3.buckets());
     full_iteration(bs3);
     bs3.set(3);
     bs3.set(63);
@@ -108,7 +108,7 @@ void test_bitset::test() {
     CPPUNIT_ASSERT(118 == bit);
 
     bitset bs4(129);
-    CPPUNIT_ASSERT(3 == bs4.buckets());
+    CPPUNIT_ASSERT(129 == bs4.buckets());
     full_iteration(bs4);
     bs4.set(128);
     CPPUNIT_ASSERT(bs4.next(bit));
