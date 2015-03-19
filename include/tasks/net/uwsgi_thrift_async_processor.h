@@ -31,9 +31,9 @@ namespace net {
 template <class handler_type>
 class uwsgi_thrift_async_processor : public uwsgi_task {
   public:
-    typedef uwsgi_thrift_transport<uwsgi_request> in_transport_type;
-    typedef uwsgi_thrift_transport<http_response> out_transport_type;
-    typedef TBinaryProtocol protocol_type;
+    using in_transport_type = uwsgi_thrift_transport<uwsgi_request>;
+    using out_transport_type = uwsgi_thrift_transport<http_response>;
+    using protocol_type = TBinaryProtocol;
 
     uwsgi_thrift_async_processor(net::socket& s) : uwsgi_task(s) { tdbg(get_string() << ": ctor" << std::endl); }
 
@@ -45,6 +45,7 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
         return os.str();
     }
 
+    /// \copydoc uwsgi_task::handle_request
     virtual bool handle_request() {
         boost::shared_ptr<in_transport_type> in_transport(new in_transport_type(request_p()));
         boost::shared_ptr<out_transport_type> out_transport(new out_transport_type(response_p()));
@@ -112,11 +113,17 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
         return true;
     }
 
+    /// Send the thrift response back to the caller.
     inline void send_thrift_response() {
         response().set_header("Content-Type", "application/x-thrift");
         send_response();
     }
 
+    /// Write a thrift error into the protocol buffer.
+    ///
+    /// \param msg The error message
+    /// \param service_name The name of the thrift service
+    /// \param out_protocol The outgoing protocol object
     inline void write_thrift_error(std::string msg, std::string service_name,
                                    boost::shared_ptr<protocol_type> out_protocol) {
         response().set_header("X-UWSGI_THRIFT_ASYNC_PROCESSOR_ERROR", msg);

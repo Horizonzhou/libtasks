@@ -15,6 +15,7 @@
 namespace tasks {
 namespace net {
 
+/// The HTTP response implementation.
 class http_response : public http_base {
   public:
     http_response() {}
@@ -24,14 +25,19 @@ class http_response : public http_base {
         m_status_code = std::atoi(status.c_str());
     }
 
+    /// \return The HTTP status string.
     inline const std::string& status() const { return m_status; }
 
+    /// \return The HTTP status code.
     inline int status_code() const { return m_status_code; }
 
+    /// \copydoc http_base::prepare_data_buffer()
     void prepare_data_buffer();
 
+    /// Read an HTTP response from a socket.
     void read_data(net::socket& sock);
 
+    /// \copydoc http_base::clear()
     void clear() {
         http_base::clear();
         m_status = "";

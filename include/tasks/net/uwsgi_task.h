@@ -26,24 +26,44 @@
 namespace tasks {
 namespace net {
 
+/// The base class for the uwsgi protocol implementation.
 class uwsgi_task : public tasks::net_io_task {
   public:
     uwsgi_task(net::socket& sock) : tasks::net_io_task(sock, EV_READ) {}
     virtual ~uwsgi_task() {}
 
+    /// \copydoc event_task::handle_event
     bool handle_event(tasks::worker* worker, int revents);
 
-    // A request handler needs to implement this
+    /// A uwsgi request handler needs to implement this. This method gets called after a uwsgi request has been
+    /// deserialized successfully.
     virtual bool handle_request() = 0;
 
+    /// \return A reference to the underlying request object.
     inline uwsgi_request& request() { return m_request; }
 
+    /// \return A const reference to the underlying request object.
+    inline const uwsgi_request& request() const { return m_request; }
+
+    /// \return A pointer to the underlying request onject.
     inline uwsgi_request* request_p() { return &m_request; }
 
+    /// \return A const pointer to the underlying request onject.
+    inline const uwsgi_request* request_p() const { return &m_request; }
+
+    /// \return A reference to the underlying response object.
     inline http_response& response() { return m_response; }
 
+    /// \return A const reference to the underlying response object.
+    inline const http_response& response() const { return m_response; }
+
+    /// \return A pointer to the underlying response onject.
     inline http_response* response_p() { return &m_response; }
 
+    /// \return A const pointer to the underlying response onject.
+    inline const http_response* response_p() const { return &m_response; }
+
+    /// Send the resonse back.
     inline void send_response() {
         worker* w = worker::get();
         assert(nullptr != w);
@@ -55,6 +75,7 @@ class uwsgi_task : public tasks::net_io_task {
     uwsgi_request m_request;
     http_response m_response;
 
+    /// Called after a request has been responded.
     inline void finish_request() { m_response.clear(); }
 };
 

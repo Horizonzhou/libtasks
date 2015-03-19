@@ -23,9 +23,9 @@ class uwsgi_thrift_handler : public thrift_interface_type {
   protected:
     // Provide some wrappers to access the request and response structures
     // from a service call implementation.
-    inline uwsgi_request& request() { return m_uwsgi_task->request(); }
+    inline const uwsgi_request& request() const { return m_uwsgi_task->request(); }
 
-    inline uwsgi_request* request_p() { return m_uwsgi_task->request_p(); }
+    inline const uwsgi_request* request_p() const { return m_uwsgi_task->request_p(); }
 
     inline http_response& response() { return m_uwsgi_task->response(); }
 

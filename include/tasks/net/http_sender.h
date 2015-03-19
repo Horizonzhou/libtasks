@@ -33,6 +33,9 @@ class http_sender : public net_io_task {
   public:
     http_sender() : net_io_task(EV_UNDEF), m_response(new http_response()) {}
 
+    /// Contructor
+    ///
+    /// \param handler The response handler to be called.
     http_sender(std::shared_ptr<handler_type> handler)
         : net_io_task(EV_UNDEF), m_response(new http_response()), m_handler(handler) {}
 
@@ -66,6 +69,7 @@ class http_sender : public net_io_task {
         return success;
     }
 
+    /// \return True if connected.
     inline bool connected() const {
         return socket().fd() != -1;
     }

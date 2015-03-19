@@ -13,25 +13,41 @@
 namespace tasks {
 namespace net {
 
+/// The HTTP request implementation.
 class http_request : public http_base {
   public:
+    /// Constructor
+    ///
+    /// \param host The host
+    /// \param url The URL
+    /// \param port The port
     http_request(std::string host, std::string url = "", int port = 80) : m_host(host), m_url(url), m_port(port) {
         m_headers["Host"] = m_host;
         init_default_headers();
     }
 
-    inline void set_host(std::string host) {
-        m_host = host;
-    }
+    /// Set the host.
+    inline void set_host(std::string host) { m_host = host; }
 
-    inline void set_url(std::string url) {
-        m_url = url;
-    }
+    /// Set the URL.
+    inline void set_url(std::string url) { m_url = url; }
 
+    /// Set the port.
+    inline void set_port(int port) { m_port = port; }
+
+    /// \return the host.
+    inline const std::string& host() const { return m_host; }
+
+    /// \return the URL.
+    inline const std::string& url() const { return m_url; }
+
+    /// \return the port.
     inline int port() const { return m_port; }
 
+    /// \copydoc http_base::prepare_data_buffer()
     void prepare_data_buffer();
 
+    /// \copydoc http_base::clear()
     void clear() {
         http_base::clear();
         init_default_headers();
