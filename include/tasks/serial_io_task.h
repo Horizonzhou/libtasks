@@ -27,6 +27,8 @@ class serial_io_task : public io_task_base {
     inline serial::term& term() { return m_term; }
     /// Provide const access to the underlying term object.
     inline const serial::term& term() const { return m_term; }
+    /// Set the term object.
+    inline void set_term(serial::term& term) { m_term = term; }
 
   protected:
     /// Grant socket access to the io_task_base.
