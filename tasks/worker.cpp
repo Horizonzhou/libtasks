@@ -65,7 +65,7 @@ void worker::run() {
             tdbg(get_string() << ": waiting..." << std::endl);
             std::unique_lock<std::mutex> lock(m_work_mutex);
             // Use wait_for to check the term flag
-            while (m_work_cond.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::timeout
+            while (m_work_cond.wait_for(lock, std::chrono::milliseconds(1)) == std::cv_status::timeout
                    && !m_leader
                    && !m_term) {}
         }
