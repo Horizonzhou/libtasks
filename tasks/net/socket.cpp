@@ -33,7 +33,7 @@ socket::socket(socket_type type) : io_base(), m_type(type) {
     }
 }
 
-void socket::listen(std::string path, int queue_size) {
+void socket::listen(const std::string& path, int queue_size) {
     m_fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (m_fd < 0) {
         throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
@@ -87,7 +87,7 @@ void socket::bind(int port, std::string ip) {
     bind(port, ip, true /* mark this object as udp socket */);
 }
 
-void socket::bind(int port, std::string ip, bool udp) {
+void socket::bind(int port, const std::string& ip, bool udp) {
     int on = 1;
     m_type = socket_type::UDP;
     m_fd = ::socket(AF_INET, udp ? SOCK_DGRAM : SOCK_STREAM, 0);
@@ -144,7 +144,7 @@ socket socket::accept() {
     return socket(client);
 }
 
-void socket::connect(std::string path) {
+void socket::connect(const std::string& path) {
     m_fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (m_fd < 0) {
         throw tasks_exception(tasks_error::SOCKET_SOCKET, "socket failed: " + std::string(std::strerror(errno)), errno);
@@ -182,7 +182,7 @@ void socket::connect(std::string path) {
     }
 }
 
-void socket::connect(std::string host, int port) {
+void socket::connect(const std::string& host, int port) {
     struct hostent *remote = gethostbyname(host.c_str());
     if (nullptr == remote) {
         throw tasks_exception(tasks_error::SOCKET_NOHOST, "Host " + host + " not found");

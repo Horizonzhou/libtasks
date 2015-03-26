@@ -72,7 +72,7 @@ class socket : public io_base {
     ///
     /// \param path The path to the socket file.
     /// \param queue_size The liste queue size. The default value is 128.
-    void listen(std::string path, int queue_size = 128);
+    void listen(const std::string& path, int queue_size = 128);
 
     // Listen for tcp sockets.
     ///
@@ -87,13 +87,13 @@ class socket : public io_base {
     /// Connect to a domain socket.
     ///
     /// \param path The path to the socket file.
-    void connect(std::string path);
+    void connect(const std::string& path);
 
     /// Connect via tcp.
     ///
     /// \param host The hostname or ip address in dot notation.
     /// \param port The port.
-    void connect(std::string host, int port);
+    void connect(const std::string& host, int port);
 
     /// Call shutdown on the fd.
     void shutdown();
@@ -117,7 +117,7 @@ class socket : public io_base {
     bool m_blocking = false;
     std::shared_ptr<struct sockaddr_in> m_addr;
 
-    void bind(int port, std::string ip, bool udp);
+    void bind(int port, const std::string& ip, bool udp);
     void init_sockaddr(int port, std::string ip = "");
 };
 

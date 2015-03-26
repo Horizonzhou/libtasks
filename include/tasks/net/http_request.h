@@ -21,16 +21,17 @@ class http_request : public http_base {
     /// \param host The host
     /// \param url The URL
     /// \param port The port
-    http_request(std::string host, std::string url = "", int port = 80) : m_host(host), m_url(url), m_port(port) {
+    http_request(const std::string& host, std::string url = "", int port = 80)
+        : m_host(host), m_url(url), m_port(port) {
         m_headers["Host"] = m_host;
         init_default_headers();
     }
 
     /// Set the host.
-    inline void set_host(std::string host) { m_host = host; }
+    inline void set_host(const std::string& host) { m_host = host; }
 
     /// Set the URL.
-    inline void set_url(std::string url) { m_url = url; }
+    inline void set_url(const std::string& url) { m_url = url; }
 
     /// Set the port.
     inline void set_port(int port) { m_port = port; }
