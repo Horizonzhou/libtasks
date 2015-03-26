@@ -163,7 +163,7 @@ class dispatcher {
 
     /// State of the workers used for maintaining the leader/followers
     tools::bitset m_workers_busy;
-    tools::bitset::int_type m_last_worker_id = 0;
+    std::atomic<tools::bitset::int_type> m_last_worker_id;
 
     /// A round robin counter to add tasks to the system. In case each
     /// worker runs it's own event loop this is useful to distribute tasks

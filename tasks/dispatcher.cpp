@@ -24,8 +24,11 @@ std::shared_ptr<dispatcher> dispatcher::m_instance = nullptr;
 dispatcher::mode dispatcher::m_run_mode = mode::SINGLE_LOOP;
 
 dispatcher::dispatcher(uint8_t num_workers)
-    : m_term(false), m_num_workers(num_workers), m_workers_busy(tools::bitset(m_num_workers)), m_rr_worker_id(0) {
-    // Create workers
+    : m_term(false),
+      m_num_workers(num_workers),
+      m_workers_busy(tools::bitset(m_num_workers)),
+      m_last_worker_id(0),
+      m_rr_worker_id(0) {
     tdbg("dispatcher: number of cpus is " << (int)m_num_workers << std::endl);
 }
 
@@ -159,7 +162,8 @@ worker* dispatcher::get_worker_by_task(event_task* task) {
             default:
                 // In single loop mode use the current executing worker
                 worker = worker::get();
-                // If we get called from some other thread than a worker we pick the last active worker
+                // If we get called from some other thread than a worker we pick the last active worker, which should be
+                // the current leader.
                 if (nullptr == worker) {
                     worker = m_workers[m_last_worker_id].get();
                 }
