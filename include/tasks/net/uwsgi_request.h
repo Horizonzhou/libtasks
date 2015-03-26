@@ -18,34 +18,49 @@
 #include <tasks/net/socket.h>
 #include <tasks/net/uwsgi_structs.h>
 #include <tasks/net/io_state.h>
+#include <tasks/net/http_base.h>
 #include <tasks/tools/buffer.h>
 
 namespace tasks {
 namespace net {
 
 /// The uwsgi protocol implementation for a request. The response is a HTTP/1.1 response.
-class uwsgi_request {
+class uwsgi_request : public http_base {
   public:
-    using uwsgi_vars_t = std::unordered_map<std::string, std::string>;
+    /// For backward compatibility.
+    using uwsgi_vars_t = http_base::headers_t;
 
     static std::string NO_VAL;
 
-    uwsgi_request() { m_header = {0, 0, 0}; }
+    uwsgi_request() : http_base() { m_header = {0, 0, 0}; }
+
+    uwsgi_request(const std::string& host, int port) : http_base(), m_host(host), m_port(port) {}
+
+    uwsgi_request(const std::string& path) : http_base(), m_path(path) {}
+
+    /// The host interface for remote connections.
+    const std::string& host() const { return m_host; }
+
+    /// The port interface for remote connections.
+    int port() const { return m_port; }
+
+    /// The path interface for unix domain socket connections.
+    const std::string& path() const { return m_path; }
 
     /// Provide access to uwsgi parameters.
     ///
     /// \param key The parameter name.
     /// \return The parameter value.
-    inline const std::string& var(std::string key) const {
-        auto it = m_vars.find(key);
-        if (m_vars.end() != it) {
-            return it->second;
+    inline const std::string& var(const std::string& key) const {
+        const std::string& val = header(key);
+        if (val == http_base::NO_VAL) {
+            return NO_VAL;
         }
-        return NO_VAL;
+        return val;
     }
 
     /// \return The parameter map.
-    inline const uwsgi_vars_t& vars() const { return m_vars; }
+    inline const uwsgi_vars_t& vars() const { return headers(); }
 
     inline void print_header() const {
         std::cout << "header:"
@@ -54,51 +69,28 @@ class uwsgi_request {
     }
 
     inline void print_vars() const {
-        for (auto& kv : m_vars) {
+        for (auto& kv : headers()) {
             std::cout << kv.first << " = " << kv.second << std::endl;
         }
     }
 
-    /// Copy data into the content buffer.
-    ///
-    /// \param data A pointer to the data.
-    /// \param size The number of bytes to copy.
-    inline void write(const char* data, std::size_t size) { m_content_buffer.write(data, size); }
-
-    /// Read data from the content buffer.
-    ///
-    /// \param data A pointer to the destination.
-    /// \param size The max number of bytes to copy.
-    /// \return The number of bytes copied.
-    inline std::streamsize read(char* data, std::size_t size) { return m_content_buffer.read(data, size); }
-
     /// Read request data from a socket.
     void read_data(socket& sock);
 
-    /// \return True if a request has been read from a socket successfully or a response has been written to a socket
-    /// successfully.
-    inline bool done() const { return m_state == io_state::DONE; }
-
     /// \return The uwsgi header struct.
-    inline uwsgi_packet_header& header() { return m_header; }
+    inline uwsgi_packet_header& uwsgi_header() { return m_header; }
 
     /// Reset an object.
     inline void clear() {
-        m_state = io_state::READY;
+        http_base::clear();
         m_header = {0, 0, 0};
-        m_data_buffer.clear();
-        m_content_buffer.clear();
-        if (m_vars.size()) {
-            m_vars.clear();
-        }
     }
 
   private:
     uwsgi_packet_header m_header;
-    tasks::tools::buffer m_data_buffer;
-    tasks::tools::buffer m_content_buffer;
-    io_state m_state = io_state::READY;
-    uwsgi_vars_t m_vars;
+    std::string m_host = http_base::NO_VAL;
+    std::string m_path = http_base::NO_VAL;
+    int m_port = -1;
 
     /// Read the header from a socket.
     void read_header(socket& sock);
@@ -111,6 +103,9 @@ class uwsgi_request {
 
     /// Parse the uswgi parameters into a hash map.
     void parse_vars();
+
+    /// \copydoc http_base::prepare_data_buffer()
+    void prepare_data_buffer();
 };
 
 }  // net

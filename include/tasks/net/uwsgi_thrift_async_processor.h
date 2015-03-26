@@ -53,11 +53,10 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
         boost::shared_ptr<protocol_type> out_protocol(new protocol_type(out_transport));
 
         // Process message
-        worker* worker = worker::get();
         m_handler.reset(new handler_type());
         tdbg(get_string() << ": created handler " << m_handler.get() << std::endl);
         m_handler->set_uwsgi_task(this);
-        m_handler->on_finish([this, worker, out_protocol] {
+        m_handler->on_finish([this, out_protocol] {
             if (m_handler->error()) {
                 tdbg(get_string() << ": handler " << m_handler.get() << " finished with error(" << m_handler->error()
                                   << "): " << m_handler->error_message() << std::endl);
@@ -77,7 +76,10 @@ class uwsgi_thrift_async_processor : public uwsgi_task {
             response().set_header("Content-Type", "application/x-thrift");
             // Make sure we run in the context of a worker thread
             if (error_code() == tasks_error::UNSET) {
-                worker->exec_in_worker_ctx([this](struct ev_loop*) { send_response(); });
+                worker* worker = dispatcher::instance()->get_worker_by_task(this);
+                worker->exec_in_worker_ctx([this](struct ev_loop*) {
+                    send_response();
+                });
             }
             // Allow cleanup now
             enable_dispose();

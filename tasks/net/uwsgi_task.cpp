@@ -19,16 +19,16 @@ bool uwsgi_task::handle_event(tasks::worker* /* worker */, int revents) {
         if (EV_READ & revents) {
             m_request.read_data(socket());
             if (m_request.done()) {
-                if (UWSGI_VARS == m_request.header().modifier1) {
+                if (UWSGI_VARS == m_request.uwsgi_header().modifier1) {
                     success = handle_request();
                     m_request.clear();
                 } else {
                     // No suuport for anything else for now
                     std::ostringstream os;
                     os << "uwsgi_task: unsupported uwsgi packet: "
-                       << "modifier1=" << (int)m_request.header().modifier1
-                       << " datasize=" << m_request.header().datasize
-                       << " modifier2=" << (int)m_request.header().modifier2;
+                       << "modifier1=" << (int)m_request.uwsgi_header().modifier1
+                       << " datasize=" << m_request.uwsgi_header().datasize
+                       << " modifier2=" << (int)m_request.uwsgi_header().modifier2;
                     tasks_exception e(tasks_error::UWSGI_NOT_IMPL, os.str());
                     set_exception(e);
                     success = false;

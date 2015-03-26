@@ -74,29 +74,43 @@ class http_sender : public net_io_task {
         return socket().fd() != -1;
     }
 
-    /// Send out an http_request. The http_sender will automatically be added to the task system when calling this
-    /// method.
-    inline void send(std::shared_ptr<http_request> request) {
+    /// Send out an http_request or uwsgi_request. The http_sender will automatically be added to the task system when
+    /// calling this method.
+    inline void send(std::shared_ptr<http_base> request) {
         m_request = request;
-        const std::string& host = m_request->header("Host");
-        tdbg("http_sender: Sending request to " << host << std::endl);
+        std::string remote;
+        bool tcp = true;
+        if (request->host() != http_base::NO_VAL) {
+            // Remote host via TCP
+            remote = request->host();
+        } else if (request->path() != http_base::NO_VAL) {
+            // Remote host via unix domain
+            remote = request->path();
+            tcp = false;
+        } else {
+            throw tasks_exception(tasks_error::HTTP_SENDER_INVALID_REMOTE, "No host or path given");
+        }
+        tdbg("http_sender: Sending request to " << remote << std::endl);
         // Find the worker if keepalive is used, and this is not the first request, or the object is reused to connect
         // to a different host.
         tasks::worker* worker = tasks::dispatcher::instance()->get_worker_by_task(this);
-        if (connected() && m_host != host) {
+        if (connected() && m_remote != remote) {
             // Stop the watcher and close an existing connection.
-            tdbg("http_sender: Closing connection to " << m_host << ":" << m_port << std::endl);
+            tdbg("http_sender: Closing connection to " << m_remote << std::endl);
             stop_watcher(worker);
             socket().close();
         }
-        m_host = host;
-        m_port = m_request->port();
-        m_request->set_header("Host", m_host);
+        m_remote = remote;
         set_events(EV_WRITE);
         if (!connected()) {
             // Connect
-            tdbg("http_sender: Connecting " << m_host << ":" << m_port << std::endl);
-            socket().connect(m_host, m_port);
+            if (tcp) {
+                tdbg("http_sender: Connecting " << m_remote << ":" << request->port() << std::endl);
+                socket().connect(m_remote, request->port());
+            } else {
+                tdbg("http_sender: Connecting " << m_remote << std::endl);
+                socket().connect(m_remote);
+            }
             tasks::dispatcher::instance()->add_event_task(this);
         } else {
             update_watcher(worker);
@@ -104,11 +118,10 @@ class http_sender : public net_io_task {
     }
 
   private:
-    std::shared_ptr<http_request> m_request;
+    std::shared_ptr<http_base> m_request;
     std::shared_ptr<http_response> m_response;
     std::shared_ptr<handler_type> m_handler;
-    std::string m_host;
-    int m_port = 80;
+    std::string m_remote;
 };
 
 }  // net

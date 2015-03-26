@@ -27,38 +27,56 @@
 namespace tasks {
 namespace net {
 
+/// HTTP / UWSGI base class that provides common functionality to create an serialize an object.
 class http_base {
   public:
+    using headers_t = std::unordered_map<std::string, std::string>;
+
     static const std::string NO_VAL;
 
     http_base() : m_content_istream(&m_content_buffer), m_content_ostream(&m_content_buffer) {}
 
     virtual ~http_base() {}
 
+    /// Set the internal IO state.
     inline void set_state(io_state state) { m_state = state; }
 
+    /// \return The internal IO state.
     inline io_state state() const { return m_state; }
+
+    /// The host interface for remote connections.
+    virtual const std::string& host() const { return NO_VAL; }
+
+    /// The port interface for remote connections.
+    virtual int port() const { return -1; }
+
+    /// The path interface for unix domain socket connections.
+    virtual const std::string& path() const { return NO_VAL; }
 
     /// Set an HTTP header.
     ///
     /// \param header The header name.
     /// \param value The header value.
-    inline void set_header(std::string header, std::string value) {
+    inline void set_header(const std::string& header, const std::string& value) {
         m_headers[header] = value;
         if (boost::iequals(header, "Content-Length")) {
             m_content_length = std::atoi(value.c_str());
         }
     }
 
+
     /// \param name The header name.
     /// \return The header value.
-    inline const std::string& header(std::string name) const {
+    inline const std::string& header(const std::string& name) const {
         auto h = m_headers.find(name);
         if (m_headers.end() != h) {
             return h->second;
         }
         return NO_VAL;
     }
+
+    /// \return The headers map.
+    inline const headers_t& headers() const { return m_headers; }
 
     /// \return The content length.
     inline std::size_t content_length() const { return m_content_length; }
@@ -130,7 +148,7 @@ class http_base {
     tasks::tools::buffer m_data_buffer;
     tasks::tools::buffer m_content_buffer;
     io_state m_state = io_state::READY;
-    std::unordered_map<std::string, std::string> m_headers;
+    headers_t m_headers;
     std::size_t m_content_length = 0;
     std::istream m_content_istream;
     std::ostream m_content_ostream;

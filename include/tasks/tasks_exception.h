@@ -44,6 +44,8 @@ enum class tasks_error {
     SOCKET_NOCON,
     /// Error on chunked encoding, that is not available yet
     HTTP_NOT_IMPL,
+    /// HTTP Sender remote error, happens if no valid remote endpoint is given
+    HTTP_SENDER_INVALID_REMOTE,
     /// HTTP errors
     HTTP_NO_CONTENT_LENGTH,
     HTTP_INVALID_STATUS_CODE,
@@ -76,11 +78,11 @@ class tasks_exception : public std::exception {
     tasks_exception() {}
 
     /// Contruct an object by error_code, message and errno.
-    tasks_exception(tasks_error error, std::string what, int sys_errno)
+    tasks_exception(tasks_error error, const std::string& what, int sys_errno)
         : m_error(error), m_what(what), m_sys_errno(sys_errno) {}
 
     /// Construct an object by error_code and message.
-    tasks_exception(tasks_error error, std::string what) : m_error(error), m_what(what) {}
+    tasks_exception(tasks_error error, const std::string& what) : m_error(error), m_what(what) {}
 
     /// Return the error code.
     tasks_error error_code() const noexcept {

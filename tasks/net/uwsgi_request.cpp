@@ -81,11 +81,40 @@ void uwsgi_request::parse_vars() {
         uint16_t val_len = *((uint16_t*)m_data_buffer.ptr(key_start + key_len));
         uint16_t val_start = key_start + key_len + 2;
         if (key_len && val_len) {
-            m_vars.insert(std::make_pair(std::string(m_data_buffer.ptr(key_start), key_len),
-                                         std::string(m_data_buffer.ptr(val_start), val_len)));
+            std::string key(m_data_buffer.ptr(key_start), key_len);
+            std::string val(m_data_buffer.ptr(val_start), val_len);
+            set_header(std::ref(key), std::ref(val));
         }
         pos = val_start + val_len;
     }
+}
+
+void uwsgi_request::prepare_data_buffer() {
+    // Set the content length
+    if (m_content_buffer.size()) {
+        set_header("CONTENT_LENGTH", std::to_string(m_content_buffer.size()));
+    }
+    // We will add the header later, as we don't know the size for the variables yet. We just keep room for it.
+    m_data_buffer.set_size(sizeof(m_header));
+    m_data_buffer.move_ptr_write(sizeof(m_header));
+    // Put all variables in.
+    for (auto& kv : headers()) {
+        uint16_t len = kv.first.length();
+        m_data_buffer.write((const char*)&len, sizeof(uint16_t));
+        m_data_buffer.write(kv.first.c_str(), len);
+        len = kv.second.length();
+        m_data_buffer.write((const char*)&len, sizeof(uint16_t));
+        m_data_buffer.write(kv.second.c_str(), len);
+    }
+    // We know the size of the variables block now.
+    auto owrite = m_data_buffer.offset_write();
+    m_header.datasize = owrite;// - sizeof(m_header);
+    // The header is ready now. First we have to jump back to the start.
+    m_data_buffer.move_ptr_write_abs(0);
+    // Now we can write the header.
+    m_data_buffer.write((const char*)&m_header, sizeof(m_header));
+    // Restore the buffers write pointer.
+    m_data_buffer.move_ptr_write_abs(owrite);
 }
 
 }  // net
