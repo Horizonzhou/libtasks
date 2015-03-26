@@ -27,6 +27,10 @@
 #define ENABLE_ADD_TIME 0
 #define ADD_TIME_BUCKETS 10
 
+#if ENABLE_ADD_TIME == 1
+#include <chrono>
+#endif
+
 namespace tasks {
 
 class event_task;
@@ -63,6 +67,9 @@ class worker {
     /// Provide access to the executing worker thread object in the current thread context.
     static worker* get() { return m_worker_ptr; }
 
+    /// Returns true if the worker is a leader.
+    inline bool leader() const { return m_leader; }
+
     inline std::string get_string() const {
         std::ostringstream os;
         os << "worker(" << this << "," << (unsigned int)m_id << ")";
@@ -83,9 +90,9 @@ class worker {
         return loop;
     }
 
-    /// Executes task_func_t directly if called in leader thread context or delegates it. Returns true when task_func_t
-    /// has been executed. If some work needs to be executed in the context of a worker thread (eg to modify a watcher)
-    /// this method needs to be used.
+    /// Executes task_func_t directly if called in leader thread context and if the worker is executing itself or
+    /// delegates it. Returns true when task_func_t has been executed. If some work needs to be executed in the context
+    /// of a worker thread (eg to modify a watcher) this method needs to be used.
     inline bool exec_in_worker_ctx(task_func_t f) {
         if (m_leader && this == worker::get()) {
             // The worker is running an event loop and we are running in the workers thread context, now execute the
@@ -116,8 +123,8 @@ class worker {
     /// Pass the event loop to the worker.
     inline void set_event_loop(std::unique_ptr<loop_t>& loop) {
         m_loop = std::move(loop);
-        m_leader = true;
         ev_set_userdata(m_loop->ptr, this);
+        m_leader = true;
         m_work_cond.notify_one();
     }
 
@@ -182,6 +189,18 @@ class worker {
             m_time_count[idx] = 0;
         }
     }
+
+    /// Start measuring for a given index.
+    inline void measure_begin(uint64_t idx) {
+        m_time_beg[idx] = std::chrono::high_resolution_clock::now();
+    }
+
+    /// Finish measuring for a given index. The time is added via add_time(uint64_t idx, uint64_t t).
+    inline void measure_end(uint64_t idx) {
+        auto end = std::chrono::high_resolution_clock::now();
+        uint64_t delta = std::chrono::duration_cast<std::chrono::microseconds>(end - m_time_beg[idx]).count();
+        add_time(idx, delta);
+    }
 #endif
 
   private:
@@ -202,6 +221,7 @@ class worker {
 #if ENABLE_ADD_TIME == 1
     uint64_t m_time_total[ADD_TIME_BUCKETS];
     uint64_t m_time_count[ADD_TIME_BUCKETS];
+    std::chrono::high_resolution_clock::time_point m_time_beg[ADD_TIME_BUCKETS];
 #endif
 
     /// Every worker has an async watcher to be able to call
