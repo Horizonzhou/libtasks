@@ -52,7 +52,6 @@ class event_task : public task, public error_base {
     /// \param worker The worker thread executing the task.
     /// \param events The events bitmask. This parameter can be ignored for timer tasks.
     /// \return True to continue execution. False to remove the task.
-    ///
     virtual bool handle_event(worker* worker, int events) = 0;
 
     /// Initialize the underlying watcher object.
