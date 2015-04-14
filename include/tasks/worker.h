@@ -105,7 +105,7 @@ class worker {
         }
     }
 
-    /// Same as exec_in_ctx(task_func_t f)
+    /// Same as exec_in_worker_ctx(task_func_t f)
     inline bool signal_call(task_func_t f) {
         return exec_in_worker_ctx(f);
     }
@@ -156,13 +156,16 @@ class worker {
     }
 
     /// Handle an I/O event.
-    void handle_io_event(ev_io* watcher, int revents);
+    //void handle_io_event(ev_io* watcher, int revents);
 
     /// Handle a timer event.
-    void handle_timer_event(ev_timer* watcher);
+    //void handle_timer_event(ev_timer* watcher);
 
     /// Return the number of events the worker has handled until now.
     inline uint64_t events_count() const { return m_events_count; }
+
+    /// Execute the event handler of a task, handle errors and deletion.
+    void exec_event_handler(event& event);
 
 #if ENABLE_ADD_TIME == 1
     /// If you need some internal time measurements local to the worker threads, you can

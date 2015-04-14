@@ -72,21 +72,7 @@ void worker::run() {
                 while (!m_events_queue.empty()) {
                     m_events_count++;
                     event event = m_events_queue.front();
-                    bool cont = event.task->handle_event(this, event.revents);
-                    // Trigger the error callbacks if needed.
-                    if (event.task->error()) {
-                        event.task->notify_error(this);
-                    }
-                    // If the handler wants to continue to run the task we activate the watcher again. Otherwise we
-                    // delete it if it has auto deletion activated.
-                    if (cont) {
-                        event.task->reset_error();
-                        event.task->start_watcher(this);
-                    } else {
-                        if (event.task->auto_delete()) {
-                            event.task->finish(this);
-                        }
-                    }
+                    exec_event_handler(event);
                     m_events_queue.pop();
                 }
             }
@@ -100,6 +86,24 @@ void worker::run() {
                 ev_unloop(m_loop->ptr, EVUNLOOP_ALL);
                 ev_loop_destroy(m_loop->ptr);
             }
+        }
+    }
+}
+
+void worker::exec_event_handler(event& event) {
+    bool cont = event.task->handle_event(this, event.revents);
+    // Trigger the error callbacks if needed.
+    if (event.task->error()) {
+        event.task->notify_error(this);
+    }
+    // If the handler wants to continue to run the task we activate the watcher again. Otherwise we
+    // delete it if it has auto deletion activated.
+    if (cont) {
+        event.task->reset_error();
+        event.task->start_watcher(this);
+    } else {
+        if (event.task->auto_delete()) {
+            event.task->finish(this);
         }
     }
 }
