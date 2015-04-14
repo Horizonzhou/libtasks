@@ -50,7 +50,7 @@ class event_task : public task, public error_base {
     /// The task will be deleted if false is returned and auto_delete() returns true.
     ///
     /// \param worker The worker thread executing the task.
-    /// \param events The events bitmask.
+    /// \param events The events bitmask. This parameter can be ignored for timer tasks.
     /// \return True to continue execution. False to remove the task.
     ///
     virtual bool handle_event(worker* worker, int events) = 0;
