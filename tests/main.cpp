@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 ADTECH GmbH
+ * Copyright (c) 2013-2015 ADTECH GmbH
  * Licensed under MIT (https://github.com/adtechlabs/libtasks/blob/master/COPYING)
  *
  * Author: Andreas Pohl
@@ -24,6 +24,7 @@
 #include "test_uwsgi_thrift_async.h"
 #include "test_bitset.h"
 #include "test_exec.h"
+#include "test_timer_task.h"
 
 #include <tasks/dispatcher.h>
 #include <tasks/executor.h>
@@ -39,6 +40,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(test_uwsgi_thrift);
 CPPUNIT_TEST_SUITE_REGISTRATION(test_uwsgi_thrift_async);
 CPPUNIT_TEST_SUITE_REGISTRATION(test_bitset);
 CPPUNIT_TEST_SUITE_REGISTRATION(test_exec);
+CPPUNIT_TEST_SUITE_REGISTRATION(test_timer_task);
 
 int main(int argc, char** argv) {
     if (argc > 1 && std::string(argv[1]) == "multi") {
