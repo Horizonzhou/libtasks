@@ -45,23 +45,10 @@ class test_handler : public tasks::net::http_response_handler {
         std::cout << "Got status " << response->status() << std::endl;
         std::cout << "Content length " << response->content_length() << std::endl;
         if (response->content_length()) {
-                std::cout << "Content: " << std::endl << response->content_p() << std::endl;
+            std::cout << "Content: " << std::endl
+                      << response->content_p() << std::endl;
         }
         return false;
-    }
-
-  private:
-    std::string decompress(const char* compressed, size_t length) {
-        //       std::vector<char> decompressed = std::vector<char>();
-        std::string decompressed;
-        std::vector<char> tmp(compressed, compressed + length);
-
-        io::filtering_ostream os;
-        os.push(io::gzip_decompressor());
-        os.push(io::back_inserter(decompressed));
-        io::write(os, &tmp[0], tmp.size());
-
-        return decompressed;
     }
 };
 
@@ -93,7 +80,9 @@ int main(int argc, char** argv) {
     disp->start();
     auto* sender = new tasks::net::http_sender<test_handler>();
     // after sending the request we terminate the dispatcher and exit
-    sender->on_finish([disp] { disp->terminate(); });
+    sender->on_finish([disp] {
+        disp->terminate();
+    });
     auto request = std::make_shared<tasks::net::http_request>(opts.host, opts.url_path, opts.port);
     auto found = opts.extra_header.find_first_of(":");
     if (found != std::string::npos) {

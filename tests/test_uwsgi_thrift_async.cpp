@@ -109,7 +109,7 @@ void test_uwsgi_thrift_async::request_finish_exec_timeout() {
 
     using namespace apache::thrift::protocol;
     using namespace apache::thrift::transport;
-    boost::shared_ptr<THttpClient> transport(new THttpClient("Localhost", 18080, "/test4"));
+    boost::shared_ptr<THttpClient> transport(new THttpClient("127.0.0.1", 18080, "/test4"));
     boost::shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport));
     IpServiceClient client(protocol);
 
@@ -166,7 +166,7 @@ void test_uwsgi_thrift_async::request_finish_exec_timeout() {
 void test_uwsgi_thrift_async::request(std::string url) {
     using namespace apache::thrift::protocol;
     using namespace apache::thrift::transport;
-    boost::shared_ptr<THttpClient> transport(new THttpClient("Localhost", 18080, url));
+    boost::shared_ptr<THttpClient> transport(new THttpClient("127.0.0.1", 18080, url));
     boost::shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport));
     IpServiceClient client(protocol);
 
