@@ -9,4 +9,4 @@ include_directories(${PROJECT_SOURCE_DIR}/../../include ${PROJECT_SOURCE_DIR})
 link_directories("${CMAKE_BINARY_DIR}/tasks")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} tasks ev)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} tasks ev)
