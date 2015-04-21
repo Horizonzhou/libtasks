@@ -26,7 +26,7 @@ include_directories(${PROJECT_SOURCE_DIR}/../include)
 add_definitions(-DTASKS_VERSION="${LIBRARY_VERSION}")
 
 add_library(${PROJECT_NAME} SHARED ${TASKS_SRC})
-target_link_libraries(${PROJECT_NAME} -lpthread ${LIBEV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} -lpthread ${LIBEV_LIBRARIES} ${Boost_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES
   VERSION ${LIBRARY_VERSION}
   SOVERSION ${LIBRARY_VERSION}

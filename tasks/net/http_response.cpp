@@ -2,17 +2,17 @@
  * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
  *
  * This file is part of libtasks.
- * 
+ *
  * libtasks is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libtasks is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,8 +20,12 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <vector>
 #include <sys/socket.h>
+
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #include <tasks/logging.h>
 #include <tasks/net/http_response.h>
@@ -50,12 +54,16 @@ void http_response::prepare_data_buffer() {
 
 // We are reading things into the content buffer only.
 void http_response::read_data(socket& sock) {
+    tdbg("http_response: Reading data from the socket." << std::endl);
     if (io_state::READY == m_state) {
+        tdbg("http_response: m_state is io_state::READY" << std::endl);
         m_content_buffer.set_size(READ_BUFFER_SIZE_BLOCK);
         m_state = io_state::READ_DATA;
     }
     if (io_state::DONE != m_state) {
-        std::streamsize towrite = 0, bytes = 0;
+        tdbg("http_response: m_state is not io_state::DONE" << std::endl);
+        std::streamsize towrite = 0, bytes = 0, total_read = 0;
+
         do {
             towrite = m_content_buffer.to_write() - 1;
             if (towrite < READ_BUFFER_SIZE_BLOCK - 1) {
@@ -63,6 +71,7 @@ void http_response::read_data(socket& sock) {
                 towrite = m_content_buffer.to_write() - 1;
             }
             bytes = sock.read(m_content_buffer.ptr_write(), towrite);
+            total_read += bytes;
             if (bytes > 0) {
                 m_content_buffer.move_ptr_write(bytes);
                 if (io_state::READ_DATA == m_state) {
@@ -71,7 +80,9 @@ void http_response::read_data(socket& sock) {
                     parse_data();
                 }
                 tdbg("http_response: read data successfully, " << bytes << " bytes" << std::endl);
-                if (m_content_length == m_content_buffer.offset_write() - m_content_start) {
+                if (m_use_gzip) {
+//                    m_state = io_state::DONE;
+                } else if (m_content_length == m_content_buffer.offset_write() - m_content_start) {
                     *(m_content_buffer.ptr_write()) = 0;
                     m_content_buffer.set_size(m_content_start + m_content_length);
                     m_content_buffer.move_ptr_read_abs(m_content_start);
@@ -79,6 +90,21 @@ void http_response::read_data(socket& sock) {
                 }
             }
         } while (towrite == bytes);
+
+        if (m_use_gzip) {
+            tdbg("http_response: Fixing content buffer start for gzip transfer encoding." << std::endl);
+            while (*(m_content_buffer.ptr(m_content_start)) == '\n' ||
+                   *(m_content_buffer.ptr(m_content_start)) == '\r') {
+                m_content_start++;
+            }
+            m_content_buffer.move_ptr_read_abs(m_content_start);
+            tdbg("http_response: Decompressing response." << std::endl);
+            if (!m_content_length_exists) {
+                m_content_length = total_read - m_content_start;
+            }
+            m_state = io_state::DONE;
+            decompress();
+        }
     }
 }
 
@@ -100,8 +126,10 @@ void http_response::parse_data() {
                 // Second line break means content starts
                 if (m_chunked_enc) {
                     throw http_exception("http_response: Chunked transfer encoding needs to be implemented!");
+                } else if (m_use_gzip) {
+                    tdbg("http_response: Using gzip compression." << std::endl);
                 } else if (!m_content_length_exists) {
-                    throw http_exception("http_response: Invalid response: Content-Length header missing");
+                    throw http_exception("http_response: Invalid response: Content-Length header missing!");
                 }
                 m_content_start = m_last_line_start + 1;
                 if (*(m_content_buffer.ptr(m_content_start)) == '\n') {
@@ -141,12 +169,11 @@ void http_response::parse_header() {
         *eq = 0;
         do {
             eq++;
-        } while (*eq == ' ');   
-        auto pair = m_headers.insert(std::make_pair(std::string(m_content_buffer.ptr(m_last_line_start)),
-                                                    std::string(eq)));
+        } while (*eq == ' ');
+        auto pair =
+            m_headers.insert(std::make_pair(std::string(m_content_buffer.ptr(m_last_line_start)), std::string(eq)));
         if (pair.second) {
-            tdbg("http_response: Header: " << pair.first->first
-                 << " = " << pair.first->second << std::endl);
+            tdbg("http_response: Header: " << pair.first->first << " = " << pair.first->second << std::endl);
             if (boost::iequals(pair.first->first, "Content-Length")) {
                 m_content_length = atoi(eq);
                 m_content_length_exists = true;
@@ -155,6 +182,11 @@ void http_response::parse_header() {
                 if (pair.first->second == "chunked") {
                     m_chunked_enc = true;
                 }
+            } else if (boost::iequals(pair.first->first, "Content-Encoding")) {
+                if (pair.first->second == "gzip") {
+                    tdbg("http_response: Content compression with gzip detected." << std::endl);
+                    m_use_gzip = true;
+                }
             }
         }
     } else {
@@ -162,5 +194,27 @@ void http_response::parse_header() {
     }
 }
 
-} // net
-} // tasks
+const char* http_response::content_p() const {
+    if (!m_content_length) {
+        return nullptr;
+    }
+    if (m_use_gzip) {
+        return m_response_string.c_str();
+    } else {
+        return m_content_buffer.ptr_read();
+    }
+}
+
+void http_response::decompress() {
+    tdbg("http_response: Decompressing " << m_content_length << " bytes." << std::endl);
+    std::vector<char> tmp(m_content_buffer.ptr_read(), m_content_buffer.ptr_read() + m_content_length);
+    m_response_string.clear();
+    boost::iostreams::filtering_ostream os;
+    os.push(boost::iostreams::gzip_decompressor());
+    os.push(boost::iostreams::back_inserter(m_response_string));
+    boost::iostreams::write(os, &tmp[0], tmp.size());
+    os.flush();
+}
+
+}  // net
+}  // tasks
