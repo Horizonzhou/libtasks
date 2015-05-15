@@ -94,10 +94,13 @@ public:
                 if (!error_code()) {
                     worker->signal_call([this] (struct ev_loop*) {
                             send_response();
+                            // Allow cleanup now.
+                            enable_dispose();
                         });
+                } else {
+                    // Allow cleanup now
+                    enable_dispose();
                 }
-                // Allow cleanup now
-                enable_dispose();
             });
 
         try {
