@@ -69,12 +69,14 @@ void net_io_task::set_events(int events) {
 
 void net_io_task::start_watcher(worker* worker) {
     assert(m_watcher_initialized);
-    worker->signal_call([this] (struct ev_loop* loop) {
-        if (!ev_is_active(m_io.get())) {
-            tdbg(get_string() << ": starting watcher" << std::endl);
-            ev_io_start(loop, m_io.get());
-        }
-    });
+    if ((EV_READ == m_events) || (EV_WRITE == m_events) || ((EV_READ | EV_WRITE) == m_events)) {
+        worker->signal_call([this](struct ev_loop* loop) {
+            if (!ev_is_active(m_io.get())) {
+                tdbg(get_string() << ": starting watcher" << std::endl);
+                ev_io_start(loop, m_io.get());
+            }
+        });
+    }
 }
 
 void net_io_task::stop_watcher(worker* worker) {
