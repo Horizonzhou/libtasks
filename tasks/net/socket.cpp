@@ -161,26 +161,27 @@ void socket::connect(std::string path) {
         throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
     }
 #endif
+    struct sockaddr_un addr;
+    bzero(&addr, sizeof(struct sockaddr_un));
+    addr.sun_family = AF_UNIX;
+    std::strcpy(addr.sun_path, path.c_str());
+    
+#ifdef _OS_LINUX_
+    if (::connect(m_fd, (struct sockaddr *) &addr, sizeof(addr.sun_family) + path.length())) {
+        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+    }
+#else
+    addr.sun_len = SUN_LEN(&addr);
+    if (::connect(m_fd, (struct sockaddr *) &addr, SUN_LEN(&addr))) {
+        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+    }
+#endif
+
     if (!m_blocking) {
         if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
             throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
         }
     }
-
-    struct sockaddr_un addr;
-    bzero(&addr, sizeof(struct sockaddr_un));
-    addr.sun_family = AF_UNIX;
-    std::strcpy(addr.sun_path, path.c_str());
-#ifdef _OS_LINUX_
-    if (::connect(m_fd, (struct sockaddr*)&addr, sizeof(addr.sun_family) + path.length()) && errno != EINPROGRESS) {
-        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
-    }
-#else
-    addr.sun_len = SUN_LEN(&addr);
-    if (::connect(m_fd, (struct sockaddr *) &addr, SUN_LEN(&addr)) && errno != EINPROGRESS) {
-        throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
-    }
-#endif
 }
 
 void socket::connect(std::string host, int port) {
@@ -198,19 +199,18 @@ void socket::connect(std::string host, int port) {
         throw socket_exception("setsockopt SO_NOSIGPIPE failed: " + std::string(std::strerror(errno)));
     }
 #endif
-    if (!m_blocking) {
-        if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
-            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
-        }
-    }
-
     struct sockaddr_in addr;
     bzero(&addr, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;
     std::memcpy(&addr.sin_addr, remote->h_addr_list[0], remote->h_length);
     addr.sin_port = htons(port);
-    if (::connect(m_fd, (struct sockaddr*)&addr, sizeof(addr)) && errno != EINPROGRESS) {
+    if (::connect(m_fd, (struct sockaddr *) &addr, sizeof(addr))) {
         throw socket_exception("connect failed: " + std::string(std::strerror(errno)));
+    }
+    if (!m_blocking) {
+        if (fcntl(m_fd, F_SETFL, fcntl(m_fd, F_GETFL, 0) | O_NONBLOCK)) {
+            throw socket_exception("fcntl failed: " + std::string(std::strerror(errno)));
+        }
     }
 }
 
