@@ -33,7 +33,7 @@
 #include <tasks/logging.h>
 
 namespace tasks {
-        
+
 class worker;
 class executor;
 class task;
@@ -42,7 +42,9 @@ class exec_task;
 class disposable;
 
 struct signal_data;
-    
+
+typedef std::function<void(int)> signal_func_t;
+
 class dispatcher {
     friend class test_exec;
 
@@ -106,6 +108,10 @@ public:
             m_instance = nullptr;
         }
     }
+
+    /// Add a signal handler.
+    /// You have to call this before calling start() or run().
+    static void add_signal_handler(int sig, signal_func_t func);
 
     // Get a free worker to promote it to the leader.
     std::shared_ptr<worker> free_worker();

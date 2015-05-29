@@ -35,12 +35,6 @@ namespace tasks {
 std::shared_ptr<dispatcher> dispatcher::m_instance = nullptr;
 dispatcher::mode dispatcher::m_run_mode = mode::SINGLE_LOOP;
 
-static void handle_signal(struct ev_loop* /* loop */, ev_signal* sig, int /* revents */) {
-    dispatcher* d = (dispatcher*) sig->data;
-    assert(nullptr != d);
-    d->terminate();
-}
-
 dispatcher::dispatcher(uint8_t num_workers)
     : m_term(false),
       m_num_workers(num_workers),
@@ -48,10 +42,6 @@ dispatcher::dispatcher(uint8_t num_workers)
       m_rr_worker_id(0) {
     // Create workers
     tdbg("dispatcher: number of cpus is " << (int) m_num_workers << std::endl);
-    // Setup signal handlers
-    ev_signal_init(&m_signal, handle_signal, SIGINT);
-    m_signal.data = this;
-    ev_signal_start(ev_default_loop(0), &m_signal);
 }
 
 void dispatcher::run(int num, ...) {
@@ -296,6 +286,25 @@ void dispatcher::remove_exec_task(exec_task* task) {
     tdbg("remove_exec_task: deleting exec_task " << task << std::endl);
     // No disposable object support yet. Just delete it.
     delete task;
+}
+
+static void handle_signal(struct ev_loop* /* loop */, ev_signal* sig, int /* revents */) {
+    signal_func_t* pfunc = (signal_func_t*) sig->data;
+    assert(nullptr != pfunc);
+    (*pfunc)(sig->signum);
+    delete pfunc;
+}
+
+void dispatcher::add_signal_handler(int sig, signal_func_t func) {
+    if (m_instance && m_instance->m_started) {
+        terr("dispatcher: add_signal_handler can't be used after the event loop has been started!");
+        assert(false);
+    }
+    ev_signal* es = new ev_signal();
+    signal_func_t* pfunc = new signal_func_t(func);
+    ev_signal_init(es, handle_signal, sig);
+    es->data = pfunc;
+    ev_signal_start(ev_default_loop(0), es);
 }
 
 } // tasks
