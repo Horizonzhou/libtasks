@@ -2,17 +2,17 @@
  * Copyright (c) 2013-2014 Andreas Pohl <apohl79 at gmail.com>
  *
  * This file is part of libtasks.
- * 
+ *
  * libtasks is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libtasks is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with libtasks.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -33,7 +33,7 @@
 #include <tasks/logging.h>
 
 namespace tasks {
-        
+
 class worker;
 class executor;
 class task;
@@ -42,7 +42,9 @@ class exec_task;
 class disposable;
 
 struct signal_data;
-    
+
+typedef std::function<void(int)> signal_func_t;
+
 class dispatcher {
     friend class test_exec;
 
@@ -106,6 +108,10 @@ public:
             m_instance = nullptr;
         }
     }
+
+    /// Add a signal handler.
+    /// You have to call this before calling start() or run().
+    static void add_signal_handler(int sig, signal_func_t func);
 
     // Get a free worker to promote it to the leader.
     std::shared_ptr<worker> free_worker();
