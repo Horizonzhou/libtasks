@@ -57,11 +57,14 @@ class http_response : public http_base {
         m_content_length_exists = false;
         m_chunked_enc = false;
         m_use_gzip = false;
+        m_response_string.clear();
+        m_transfer_buffer.clear();
     }
 
   private:
     std::string m_status;
     std::string m_response_string;
+    tools::buffer m_transfer_buffer;
     int m_status_code = 0;
     int m_line_number = 0;
     std::size_t m_last_line_start = 0;
@@ -71,6 +74,7 @@ class http_response : public http_base {
     bool m_use_gzip = false;
 
     void parse_data();
+    void parse_chunked_data();
     void parse_line();
     void parse_status();
     void parse_header();
