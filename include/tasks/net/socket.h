@@ -58,6 +58,10 @@ public:
         return m_fd;
     }
 
+    inline void set_fd(int fd) {
+        m_fd = fd;
+    }
+
     inline bool udp() const {
         return m_type == socket_type::UDP;
     }
